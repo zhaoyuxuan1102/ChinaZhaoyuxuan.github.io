@@ -21,42 +21,8 @@
 </html>
 <body>
 <main class="content">
-  <section class="jumbotron">
-  <div class="video">
-    
-      <div class="video-frame">
-        <img src="/images/ocean/overlay-hero.png" alt="Decorative image frame">
-      </div>
-    
-    <div class="video-media">
-      <video playsinline autoplay loop muted data-autoplay poster="/images/ocean/ocean.png" x5-video-player-type="h5">
-        <source src="/images/ocean/ocean.mp4" type="video/mp4">
-        <source src="/images/ocean/ocean.ogv" type="video/ogg">
-        <source src="/images/ocean/ocean.webm" type="video/webm">
-        <p>Your user agent does not support the HTML5 Video element.</p>
-      </video>
-      <div class="video-overlay"></div>
-    </div>
-    <div class="video-inner text-center text-white">
-      <h1><a href="/ChinaZhaoyuxuan.github.io/">Hexo</a></h1>
-      <p></p>
-      <div><img src="/images/hexo-inverted.svg" class="brand" alt="Hexo"></div>
-    </div>
-    <div class="video-learn-more">
-      <a class="anchor" href="#landingpage"><i class="fe fe-mouse"></i></a>
-    </div>
-  </div>
-</section>
-
-<div id="landingpage">
   <section class="outer">
-  <article class="articles">
-    
-    <h1 class="page-type-title"></h1>
-
-    
-      
-        <article id="post-图层&amp;重绘重排" class="article article-type-post" itemscope itemprop="blogPost">
+  <article id="post-图层&amp;重绘重排" class="article article-type-post" itemscope itemprop="blogPost">
 
   <div class="article-inner">
     
@@ -173,166 +139,29 @@ window.cancelAnimationFrame(requestID)
   </div>
 
   
+    
+  <nav class="article-nav">
+    
+    
+      <a href="/ChinaZhaoyuxuan.github.io/2019/03/04/渲染引擎&阻塞/" class="article-nav-link">
+        <strong class="article-nav-caption">Olde posts</strong>
+        <div class="article-nav-title"></div>
+      </a>
+    
+  </nav>
 
+
+  
+
+  
+    
   
 
 </article>
 
 
 
-      
-        <article id="post-渲染引擎&amp;阻塞" class="article article-type-post" itemscope itemprop="blogPost">
-
-  <div class="article-inner">
-    
-
-    
-      <div class="article-meta">
-        <a href="/ChinaZhaoyuxuan.github.io/2019/03/04/渲染引擎&阻塞/" class="article-date">
-  <time datetime="2019-03-04T11:45:08.150Z" itemprop="datePublished">2019-03-04</time>
-</a>
-        
-      </div>
-    
-
-    <div class="article-entry" itemprop="articleBody">
-      
-      
-      
-        <h2 id="一、浏览器渲染引擎"><a href="#一、浏览器渲染引擎" class="headerlink" title="一、浏览器渲染引擎"></a>一、浏览器渲染引擎</h2><h3 id="主要模块"><a href="#主要模块" class="headerlink" title="主要模块"></a>主要模块</h3><ul>
-<li>一个渲染引擎主要包括：HTML解析器，CSS解析器，javascript引擎，布局layout模块，绘图模块<ul>
-<li>HTML解析器：解释HTML文档的解析器，主要作用是将HTML文本解释成DOM树。</li>
-<li>CSS解析器：级联样式表的解析器，它的作用是为DOM中的各个元素对象计算出样式信息，为布局提供基础设施</li>
-<li>Javascript引擎：使用Javascript代码可以修改网页的内容，也能修改css的信息，javascript引擎能够解释javascript代码，并通过DOM接口和CSSOM接口来修改网页内容和样式信息，从而改变渲染的结果。</li>
-<li>布局（layout）：在DOM创建之后，Webkit需要将其中的元素对象同样式信息结合起来，计算他们的大小位置等布局信息，形成一个能表达这所有信息的内部表示模型</li>
-<li>绘图模块（paint）：使用图形库将布局计算后的各个网页的节点绘制成图像结果<blockquote>
-<p>备注：文档对象模型（Document Object Model，简称DOM）</p>
-</blockquote>
-</li>
-</ul>
-</li>
-</ul>
-<h3 id="渲染过程"><a href="#渲染过程" class="headerlink" title="渲染过程"></a>渲染过程</h3><ul>
-<li>浏览器渲染页面的整个过程：浏览器会从上到下解析文档。<ol>
-<li>遇见 HTML 标记，调用HTML解析器解析为对应的 token （一个token就是一个标签文本的序列化）并构建 DOM 树（就是一块内存，保存着tokens，建立它们之间的关系）。</li>
-<li>遇见 style/link 标记 调用css解析器 处理 CSS 标记并构建 CSSOM 树。</li>
-<li>遇见 script 标记 调用 javascript解析器 处理script标记，绑定事件、修改DOM树/CSSOM树 等</li>
-<li>将 DOM 与 CSSOM 合并成一个渲染树。</li>
-<li>根据渲染树来布局，以计算每个节点的几何信息。</li>
-<li>将各个节点绘制到屏幕上。</li>
-</ol>
-</li>
-</ul>
-<blockquote>
-<p>以上这些模块依赖很多其他的基础模块，包括要使用到网络 存储 2D/3D图像 音频视频解码器 和 图片解码器。<br>所以渲染引擎中还会包括如何使用这些依赖模块的部分。</p>
-</blockquote>
-<h2 id="二、阻塞渲染"><a href="#二、阻塞渲染" class="headerlink" title="二、阻塞渲染"></a>二、阻塞渲染</h2><pre><code>* css阻塞
-    * css在head中通过link引入会阻塞页面的渲染(推荐的方式)    
-        为什么？
-            避免闪屏现象                                                
-    * css会阻塞js的执行，不阻塞js等其他资源的加载    
-        为什么？                                            
-            脚本在文档解析阶段会请求样式信息。如果当时还没有加载和解析样式，
-            脚本就会获得错误的回复，这样显然会产生很多问题。这看上去是一个非典型案例，
-            但事实上非常普遍。Firefox 在样式表加载和解析的过程中，会禁止所有脚本。
-            而对于 WebKit 而言，仅当脚本尝试访问的样式属性可能受尚未加载的样式表影响时，它才会禁止该脚本。
-* js阻塞
-    * 直接引入的js会阻塞页面的渲染
-        为什么？
-            Javascript代码可能会修改DOM树/CSSOM树的结构
-    * js顺序执行，阻塞后续js逻辑的执行，不阻塞js等其他资源的加载
-        为什么？
-            维护依赖关系
-
-    * 预解析
-            WebKit 和 Firefox 都进行了这项优化。在执行js脚本时，其他线程会解析文档的其余部分，
-            找出并加载需要通过网络加载的其他资源。通过这种方式，资源可以在并行连接上加载，
-            从而提高总体速度。请注意，预解析器不会修改 DOM 树，而是将这项工作交由主解析器处理；
-            预解析器只会解析外部资源（例如外部脚本、样式表和图片）的引用。
-
-            提前发送请求，提前分析外部资源内容。    
-</code></pre><blockquote>
-<p>在上述的过程中，网页在加载和渲染过程中会发出“DOMContentloaded”和“onload”事件<br>分别在DOM树构建（解析）完成之后，以及DOM树构建完并且网页所依赖的资源都加载完之后发生、<br>因为某些资源的加载并不会阻碍DOM树的创建，所以这两个事件多数不同时发生。</p>
-</blockquote>
-<ul>
-<li><p>从DOM树到可视化图像<br>  1) CSS文件被CSS解析器解释成内部表示结构(CSSDOM)<br>  2) CSS解析器工作完成之后，在DOM树上附加解释后的样式信息，这就是RenderObject树<br>  3) RenderObject在创建的同时，Webkit会根据网页的结构创建RenderLayer，同时构建一个绘图上下文<br>  4) 根据绘图上下文生成最终的图像（这一过程需要依赖图形库） </p>
-</li>
-<li><p>上面介绍的是一个完整的渲染过程，但现代网页很多都是动态的，这意味着在渲染完成之后，由于网页的动画或者用户的交互，<br>  浏览器其实一直在不停地重复执行渲染过程。（重绘重排），以上的数字表示的是基本顺序，这不是严格一致的，<br>  这个过程可能重复也可能交叉</p>
-</li>
-</ul>
-
-      
-    </div>
-    <footer class="article-footer">
-      <a data-url="https://github.com/ChinaZhaoyuxuan/ChinaZhaoyuxuan.github.io/2019/03/04/渲染引擎&阻塞/" data-id="cjsua5pc10000x0vfbl7zbgu5" class="article-share-link">Share</a>
-      
-    </footer>
-
-  </div>
-
-  
-
-  
-
-</article>
-
-
-
-      
-        <article id="post-ASP.NET自定义404和500错误页面 - 副本" class="article article-type-post" itemscope itemprop="blogPost">
-
-  <div class="article-inner">
-    
-
-    
-      <div class="article-meta">
-        <a href="/ChinaZhaoyuxuan.github.io/2019/03/02/ASP.NET自定义404和500错误页面 - 副本/" class="article-date">
-  <time datetime="2019-03-02T05:53:30.179Z" itemprop="datePublished">2019-03-02</time>
-</a>
-        
-      </div>
-    
-
-    <div class="article-entry" itemprop="articleBody">
-      
-      
-      
-        <h1 id="【转载】ASP-NET自定义404和500错误页面"><a href="#【转载】ASP-NET自定义404和500错误页面" class="headerlink" title="【转载】ASP.NET自定义404和500错误页面"></a>【转载】ASP.NET自定义404和500错误页面</h1><p>在ASP.NET网站项目实际上线运行的过程中，有时候在运行环境下会出现400错误或者500错误，这些错误默认的页面都不友好，比较简单单调，其实我们可以自行设置这些错误所对应的页面，让这些错误跳转到我们指定的路径。此文将介绍如何在ASP.NET项目中设置404错误和500错误为例。</p>
-<p>首先我们可以到网上下载到一些优美的404错误页面或者500错误页面的HTML模板，或者你也可以自行制作个HTML模板。然后将该页面放入到你的网站项目中，如果你的项目为WebForm项目，则你将需要新建一个Error.Aspx页面，然后将静态HTML代码复制到上面。如果是MVC模式的网站，则需要新建一个视图控制器，在相应的视图页面加入这些HTML代码。</p>
-<p>错误页面新建好了后，下一步进行Web.config数据项的设置，设置完成后，IIS将会根据web.config文件中的设置的错误处理路径跳转。在这里，需要设置&lt;system.webServer&gt;下的<httperrors>节点内部内容，指定相应的错误状态吗，并给出跳转路径。下面的设置项以MVC站点为例，所以路径中未带相关后缀名。</httperrors></p>
-<p>设置404错误处理页面的代码如下：</p>
-  <httperrors errormode="Custom" existingresponse="Replace"><br>      <remove statuscode="404"><br>      <error statuscode="404" path="/MyError/Index" responsemode="ExecuteURL"><br>    </error></remove></httperrors>
-
-<p>设置500错误处理</p>
-  <httperrors errormode="Custom" existingresponse="Replace"><br>      <remove statuscode="500"><br>      <error statuscode="500" path="/MyError/Index" responsemode="ExecuteURL"><br>  </error></remove></httperrors>
-
-<p>上述设置中，统一将错误页面指向了/MyError/Index网址。至此相关配置设置成功。</p>
-<p>######备注：此文章转载博客园，博主个人站致力于分享相关技术文章，同时也分享前端和Linux运维等知识。</p>
-
-      
-    </div>
-    <footer class="article-footer">
-      <a data-url="https://github.com/ChinaZhaoyuxuan/ChinaZhaoyuxuan.github.io/2019/03/02/ASP.NET自定义404和500错误页面 - 副本/" data-id="cjsua5pcb0001x0vf0q9la0j0" class="article-share-link">Share</a>
-      
-    </footer>
-
-  </div>
-
-  
-
-  
-
-</article>
-
-
-
-      
-  </article>
-  
-  
 </section>
-</div>
-
   <footer class="footer">
   
   <div class="outer">
