@@ -21,42 +21,8 @@
 </html>
 <body>
 <main class="content">
-  <section class="jumbotron">
-  <div class="video">
-    
-      <div class="video-frame">
-        <img src="/images/ocean/overlay-hero.png" alt="Decorative image frame">
-      </div>
-    
-    <div class="video-media">
-      <video playsinline autoplay loop muted data-autoplay poster="/images/ocean/ocean.png" x5-video-player-type="h5">
-        <source src="/images/ocean/ocean.mp4" type="video/mp4">
-        <source src="/images/ocean/ocean.ogv" type="video/ogg">
-        <source src="/images/ocean/ocean.webm" type="video/webm">
-        <p>Your user agent does not support the HTML5 Video element.</p>
-      </video>
-      <div class="video-overlay"></div>
-    </div>
-    <div class="video-inner text-center text-white">
-      <h1><a href="/ChinaZhaoyuxuan.github.io/">Hexo</a></h1>
-      <p></p>
-      <div><img src="/images/hexo-inverted.svg" class="brand" alt="Hexo"></div>
-    </div>
-    <div class="video-learn-more">
-      <a class="anchor" href="#landingpage"><i class="fe fe-mouse"></i></a>
-    </div>
-  </div>
-</section>
-
-<div id="landingpage">
   <section class="outer">
-  <article class="articles">
-    
-    <h1 class="page-type-title"></h1>
-
-    
-      
-        <article id="post-渲染引擎&amp;阻塞" class="article article-type-post" itemscope itemprop="blogPost">
+  <article id="post-渲染引擎&amp;阻塞" class="article article-type-post" itemscope itemprop="blogPost">
 
   <div class="article-inner">
     
@@ -146,68 +112,29 @@
   </div>
 
   
+    
+  <nav class="article-nav">
+    
+    
+      <a href="/ChinaZhaoyuxuan.github.io/2019/03/02/ASP.NET自定义404和500错误页面 - 副本/" class="article-nav-link">
+        <strong class="article-nav-caption">Olde posts</strong>
+        <div class="article-nav-title"></div>
+      </a>
+    
+  </nav>
 
+
+  
+
+  
+    
   
 
 </article>
 
 
 
-      
-        <article id="post-ASP.NET自定义404和500错误页面 - 副本" class="article article-type-post" itemscope itemprop="blogPost">
-
-  <div class="article-inner">
-    
-
-    
-      <div class="article-meta">
-        <a href="/ChinaZhaoyuxuan.github.io/2019/03/02/ASP.NET自定义404和500错误页面 - 副本/" class="article-date">
-  <time datetime="2019-03-02T05:53:30.179Z" itemprop="datePublished">2019-03-02</time>
-</a>
-        
-      </div>
-    
-
-    <div class="article-entry" itemprop="articleBody">
-      
-      
-      
-        <h1 id="【转载】ASP-NET自定义404和500错误页面"><a href="#【转载】ASP-NET自定义404和500错误页面" class="headerlink" title="【转载】ASP.NET自定义404和500错误页面"></a>【转载】ASP.NET自定义404和500错误页面</h1><p>在ASP.NET网站项目实际上线运行的过程中，有时候在运行环境下会出现400错误或者500错误，这些错误默认的页面都不友好，比较简单单调，其实我们可以自行设置这些错误所对应的页面，让这些错误跳转到我们指定的路径。此文将介绍如何在ASP.NET项目中设置404错误和500错误为例。</p>
-<p>首先我们可以到网上下载到一些优美的404错误页面或者500错误页面的HTML模板，或者你也可以自行制作个HTML模板。然后将该页面放入到你的网站项目中，如果你的项目为WebForm项目，则你将需要新建一个Error.Aspx页面，然后将静态HTML代码复制到上面。如果是MVC模式的网站，则需要新建一个视图控制器，在相应的视图页面加入这些HTML代码。</p>
-<p>错误页面新建好了后，下一步进行Web.config数据项的设置，设置完成后，IIS将会根据web.config文件中的设置的错误处理路径跳转。在这里，需要设置&lt;system.webServer&gt;下的<httperrors>节点内部内容，指定相应的错误状态吗，并给出跳转路径。下面的设置项以MVC站点为例，所以路径中未带相关后缀名。</httperrors></p>
-<p>设置404错误处理页面的代码如下：</p>
-  <httperrors errormode="Custom" existingresponse="Replace"><br>      <remove statuscode="404"><br>      <error statuscode="404" path="/MyError/Index" responsemode="ExecuteURL"><br>    </error></remove></httperrors>
-
-<p>设置500错误处理</p>
-  <httperrors errormode="Custom" existingresponse="Replace"><br>      <remove statuscode="500"><br>      <error statuscode="500" path="/MyError/Index" responsemode="ExecuteURL"><br>  </error></remove></httperrors>
-
-<p>上述设置中，统一将错误页面指向了/MyError/Index网址。至此相关配置设置成功。</p>
-<p>######备注：此文章转载博客园，博主个人站致力于分享相关技术文章，同时也分享前端和Linux运维等知识。</p>
-
-      
-    </div>
-    <footer class="article-footer">
-      <a data-url="https://github.com/ChinaZhaoyuxuan/ChinaZhaoyuxuan.github.io/2019/03/02/ASP.NET自定义404和500错误页面 - 副本/" data-id="cjsuafk6r0000hkvfxxyua8lp" class="article-share-link">Share</a>
-      
-    </footer>
-
-  </div>
-
-  
-
-  
-
-</article>
-
-
-
-      
-  </article>
-  
-  
 </section>
-</div>
-
   <footer class="footer">
   
   <div class="outer">
