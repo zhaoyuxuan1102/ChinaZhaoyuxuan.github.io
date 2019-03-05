@@ -215,13 +215,14 @@
     
     <div class="article-entry" itemprop="articleBody">
       
-        <h1 id><a href="#" class="headerlink" title=" "></a> </h1><h1 id="-1"><a href="#-1" class="headerlink" title=" "></a> </h1><p>#Css图层与重绘重排<br>    浏览器在渲染一个页面时，会将页面分为很多个图层，图层有大有小，每个图层上有一个或多个节点。<br>    在渲染DOM的时候，浏览器所做的工作实际上是：</p>
-<pre><code>1. 获取DOM后分割为多个图层
-2. 对每个图层的节点计算样式结果        （Recalculate style--样式重计算）
-3. 为每个节点生成图形和位置            （Layout--重排,回流）
-4. 将每个节点绘制填充到图层位图中        （Paint--重绘）
-5. 图层作为纹理上传至GPU
-6. 符合多个图层到页面上生成最终屏幕图像    （Composite Layers--图层重组）
+        <h1 id><a href="#" class="headerlink" title=" "></a> </h1><h1 id="-1"><a href="#-1" class="headerlink" title=" "></a> </h1><h1 id="Css图层与重绘重排"><a href="#Css图层与重绘重排" class="headerlink" title="Css图层与重绘重排"></a>Css图层与重绘重排</h1><pre><code>浏览器在渲染一个页面时，会将页面分为很多个图层，图层有大有小，每个图层上有一个或多个节点。
+在渲染DOM的时候，浏览器所做的工作实际上是：
+    1. 获取DOM后分割为多个图层
+    2. 对每个图层的节点计算样式结果        （Recalculate style--样式重计算）
+    3. 为每个节点生成图形和位置            （Layout--重排,回流）
+    4. 将每个节点绘制填充到图层位图中        （Paint--重绘）
+    5. 图层作为纹理上传至GPU
+    6. 符合多个图层到页面上生成最终屏幕图像    （Composite Layers--图层重组）
 </code></pre><p>###图层创建的条件<br>    Chrome中满足以下任意情况就会创建图层：</p>
 <pre><code>1. 拥有具有3D变换的CSS属性
 2. 使用加速视频解码的&lt;video&gt;节点
