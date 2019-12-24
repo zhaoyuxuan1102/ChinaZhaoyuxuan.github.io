@@ -24,8 +24,8 @@ Zzx.prototype ={
 		this.testJson = {
 						list:[
 							
-								{src:"ywaq.jpg",title:"一路向北",song:"一路向北"},
-								{src:"ywaq.jpg",title:"The Answering Machine",song:"animals2"},
+								{src:"ywaq.jpg",title:"一路向北",song:"一路向北",singer:"周杰伦"},
+								{src:"ywaq.jpg",title:"断了的弦",song:"断了的弦",singer:"周杰伦"},
 								{src:"ywaq.jpg",title:"The Answering Machine",song:"animals2"},
 								{src:"ywaq.jpg",title:"The Answering Machine",song:"animals2"},
 								{src:"ywaq.jpg",title:"The Answering Machine",song:"animals2"},
@@ -91,7 +91,7 @@ Zzx.prototype ={
 									  + '<div class="frmPlay"><i></i></div>'
 									  + '<span style="display:none;" class="musicData" pic='+oList[this.stack].src+' title='+oList[this.stack].title+' value='+oList[this.stack].song+'></span>'
 									  + '<div class="l"><img class="picStyle" src="'+this.imgPath+oList[this.stack].src+'"/></div>'
-									  + '<div class="textBox">'+oList[this.stack].title+'<p>金沙-他不爱我</p></div>'
+									  + '<div class="textBox">'+oList[this.stack].title+'<p>'+oList[this.stack].singer+'</p></div>'
 									  + '</li>');
 										break;
 			case 2:this.content[0].innerHTML  = '此模块建设中...';
