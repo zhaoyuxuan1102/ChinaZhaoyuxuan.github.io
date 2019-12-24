@@ -24,7 +24,7 @@ Zzx.prototype ={
 		this.testJson = {
 						list:[
 							
-								{src:"ywaq.jpg",title:"The Answering Machine",song:"animals2"},
+								{src:"ywaq.jpg",title:"一路向北",song:"一路向北"},
 								{src:"ywaq.jpg",title:"The Answering Machine",song:"animals2"},
 								{src:"ywaq.jpg",title:"The Answering Machine",song:"animals2"},
 								{src:"ywaq.jpg",title:"The Answering Machine",song:"animals2"},
