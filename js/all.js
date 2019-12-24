@@ -17,7 +17,7 @@ Zzx.prototype ={
 		//堆栈指针初始化
 		this.stack = 0;
 		//图片路径
-		this.imgPath = 'data/';		
+		this.imgPath = '/ChinaZhaoyuxuan.github.io/data/';		
 		//定时器
 		this.timer = null;			
 		//测试JSON数据（可以替换为AJAX请求返回值）
