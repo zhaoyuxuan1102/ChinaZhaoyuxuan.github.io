@@ -26,7 +26,7 @@ Zzx.prototype ={
 							
 								{src:"ywaq.jpg",title:"一路向北",song:"一路向北",singer:"周杰伦"},
 								{src:"ywaq.jpg",title:"断了的弦",song:"断了的弦",singer:"周杰伦"},
-								{src:"ywaq.jpg",title:"The Answering Machine",song:"animals2"},
+								{src:"ywaq.jpg",title:"漂移",song:"漂移",singer:"周杰伦"},
 								{src:"ywaq.jpg",title:"The Answering Machine",song:"animals2"},
 								{src:"ywaq.jpg",title:"The Answering Machine",song:"animals2"},
 								{src:"ywaq.jpg",title:"The Answering Machine",song:"animals2"},
