@@ -1,0 +1,2 @@
+"use strict";(self["webpackChunkbattlefield5"]=self["webpackChunkbattlefield5"]||[]).push([[443],{7233:function(t,e,l){l.r(e),l.d(e,{default:function(){return n}});var u=function(){var t=this,e=t._self._c;return e("div",{staticClass:"about"},[e("audio",{ref:"audio",attrs:{controls:"",src:"http://music.163.com/song/media/outer/url?id=1480243803.mp3",loop:"true",preload:"preload"}})])},r=[],a=l(1001),o={},s=(0,a.Z)(o,u,r,!1,null,null,null),n=s.exports}}]);
+//# sourceMappingURL=about.bbcd813c.js.map
