@@ -368,7 +368,6 @@
             box-shadow: var(--shadow);
         }
 
-        /* 使用grid实现三列等分 */
         .shift-item {
             display: grid;
             grid-template-columns: 1fr 1fr 1fr;
@@ -386,7 +385,6 @@
             background: #fafbff;
         }
 
-        /* 标题行 */
         .shift-header {
             background: #f1f5f9 !important;
             font-weight: 700;
@@ -403,19 +401,17 @@
             font-weight: 700;
         }
 
-        /* 单元格内容 */
         .shift-item .s-date,
         .shift-item .s-week,
         .shift-item .s-shift {
             font-weight: 600;
-            color: var(--ink);  /* 统一深色 */
+            color: var(--ink);
             font-size: 12.5px;
             text-align: center;
             justify-self: center;
             width: 100%;
         }
         .shift-item .s-week {
-            /* 颜色与日期一致 */
             color: var(--ink);
         }
 
@@ -484,12 +480,11 @@
         .shift-table-wrap tbody tr:hover {
             background: var(--primary-light);
         }
-        /* 表格内三列等宽（自动） */
         .shift-table-wrap td.date-cell,
         .shift-table-wrap td.week-cell,
         .shift-table-wrap td.shift-cell {
             font-weight: 600;
-            color: var(--ink);  /* 统一深色 */
+            color: var(--ink);
             font-size: 12.5px;
             text-align: center;
         }
@@ -571,7 +566,7 @@
         }
 
         /* ============================================================
-                   响应式：平板 & 桌面
+                   响应式
                    ============================================================ */
         @media (min-width: 640px) {
             .wrap {
@@ -624,7 +619,6 @@
         }
 
         @media (min-width: 820px) {
-            /* 桌面端：隐藏卡片列表，显示表格 */
             .shift-list {
                 display: none !important;
             }
@@ -641,7 +635,6 @@
             }
         }
 
-        /* 手机端：强制卡片列表显示，表格隐藏 */
         @media (max-width: 819px) {
             .shift-list {
                 display: block !important;
@@ -675,7 +668,6 @@
             }
         }
 
-        /* 小屏手机极端优化 */
         @media (max-width: 400px) {
             .shift-item {
                 padding: 6px 10px;
@@ -772,6 +764,8 @@
         (function() {
             "use strict";
 
+            const CACHE_KEY = 'schedule_cache';
+
             // ===== DOM 引用 =====
             var $ = function(id) { return document.getElementById(id); };
             var drop = $('drop');
@@ -812,8 +806,37 @@
                 return ['日', '一', '二', '三', '四', '五', '六'][d.getDay()];
             }
 
-            function isMobile() {
-                return window.innerWidth < 820;
+            // ===== 缓存操作 =====
+            function saveCache() {
+                if (!state.loaded) return;
+                var cache = {
+                    people: state.people,
+                    dates: state.dates.map(function(d) { return d ? d.getTime() : null; }),
+                    weekdays: state.weekdays,
+                    lastKeyword: state.lastKeyword || '',
+                    loaded: true
+                };
+                try {
+                    localStorage.setItem(CACHE_KEY, JSON.stringify(cache));
+                } catch (e) { /* ignore */ }
+            }
+
+            function loadCache() {
+                var raw = localStorage.getItem(CACHE_KEY);
+                if (!raw) return null;
+                try {
+                    var cache = JSON.parse(raw);
+                    if (!cache.people || !cache.dates || !cache.weekdays) return null;
+                    // 恢复 dates
+                    cache.dates = cache.dates.map(function(t) { return t ? new Date(t) : null; });
+                    return cache;
+                } catch (e) {
+                    return null;
+                }
+            }
+
+            function clearCache() {
+                localStorage.removeItem(CACHE_KEY);
             }
 
             // ===== 解析 Excel =====
@@ -911,7 +934,7 @@
                 return { cls: 'chip-work', label: s };
             }
 
-            // ===== 渲染结果（根据屏幕宽度自动切换卡片/表格） =====
+            // ===== 渲染结果 =====
             function renderResult(matches) {
                 resultBox.style.display = 'block';
                 resultBox.innerHTML = '';
@@ -925,7 +948,6 @@
                 var frag = document.createDocumentFragment();
 
                 matches.forEach(function(p) {
-                    // ---- 人员信息卡片 ----
                     var card = document.createElement('div');
                     card.className = 'pcard';
 
@@ -951,12 +973,9 @@
                         '</div>';
                     frag.appendChild(card);
 
-                    // ---- 排班数据：卡片列表（移动端） & 表格（桌面端） ----
-                    // 卡片列表（始终生成，但桌面端用CSS隐藏）
                     var listDiv = document.createElement('div');
                     listDiv.className = 'shift-list';
 
-                    // 添加标题行（表头）
                     var headerItem = document.createElement('div');
                     headerItem.className = 'shift-item shift-header';
                     headerItem.innerHTML =
@@ -965,12 +984,10 @@
                         '<span class="s-shift">班次</span>';
                     listDiv.appendChild(headerItem);
 
-                    // 数据行
                     for (var i = 0; i < p.cols.length; i++) {
                         var key = p.cols[i];
                         var d = state.dates[i];
                         var code = p.shifts.hasOwnProperty(key) ? p.shifts[key] : null;
-                        // 使用完整日期格式 YYYY-MM-DD
                         var dateTxt = d && !isNaN(d) ? fmtDate(d) : '';
                         var wdTxt = state.weekdays[i] || '';
 
@@ -994,7 +1011,6 @@
                     }
                     frag.appendChild(listDiv);
 
-                    // ---- 表格（桌面端） ----
                     var tableWrap = document.createElement('div');
                     tableWrap.className = 'shift-table-wrap';
                     var table = document.createElement('table');
@@ -1042,12 +1058,14 @@
                 if (!kw) {
                     renderResult([]);
                     resultBox.innerHTML = '<div class="empty"><span class="empty-icon">✏️</span>请输入姓名。</div>';
+                    saveCache(); // 保存空关键词
                     return;
                 }
                 var matches = state.people.filter(function(p) {
                     return p.name.toLowerCase().indexOf(kw) >= 0;
                 });
                 renderResult(matches);
+                saveCache(); // 保存关键词和状态
             }
 
             // ===== 下拉建议 =====
@@ -1093,87 +1111,132 @@
 
                         queryBox.style.display = 'block';
                         hint.textContent = '输入姓名后按回车或点查询；支持姓或名的一部分模糊匹配。';
-                        kwInput.focus();
 
-                        // 清空旧结果
+                        // 清空旧关键词，保存新缓存（不含关键词）
+                        state.lastKeyword = '';
+                        kwInput.value = '';
+                        saveCache();
+
+                        // 清空结果，提示输入
                         resultBox.style.display = 'block';
                         resultBox.innerHTML = '<div class="empty"><span class="empty-icon">👆</span>输入姓名开始查询</div>';
 
-                        // 如果有上次关键词，自动查询
-                        if (state.lastKeyword) {
-                            kwInput.value = state.lastKeyword;
-                            doQuery();
-                        }
+                        kwInput.focus();
                     } catch (err) {
                         queryBox.style.display = 'none';
                         resultBox.style.display = 'block';
                         resultBox.innerHTML = '<div class="empty"><span class="empty-icon">❌</span>解析失败：' + err
                             .message + '</div>';
+                        clearCache();
                     }
                 };
                 reader.readAsArrayBuffer(file);
             }
 
-            // ===== 窗口resize：重新渲染 =====
-            var resizeTimer = null;
+            // ===== 从缓存恢复 =====
+            function restoreFromCache() {
+                var cache = loadCache();
+                if (!cache) return false;
 
-            function handleResize() {
-                if (resizeTimer) clearTimeout(resizeTimer);
-                resizeTimer = setTimeout(function() {
-                    if (state.loaded && state.lastKeyword) {
-                        var matches = state.people.filter(function(p) {
-                            return p.name.toLowerCase().indexOf(state.lastKeyword) >= 0;
-                        });
-                        renderResult(matches);
-                    }
-                    resizeTimer = null;
-                }, 200);
+                // 恢复数据
+                state.people = cache.people;
+                state.dates = cache.dates;
+                state.weekdays = cache.weekdays;
+                state.loaded = true;
+                state.lastKeyword = cache.lastKeyword || '';
+
+                // 显示文件信息
+                var n = state.people.length;
+                var d0 = state.dates[0],
+                    d1 = state.dates[state.dates.length - 1];
+                var range = (d0 && !isNaN(d0) && d1 && !isNaN(d1)) ? (fmtDate(d0) + ' 至 ' + fmtDate(d1)) : '';
+                fileInfo.style.display = 'block';
+                fileInfo.innerHTML =
+                    '💾 已从缓存加载 · 共 <b>' + n + '</b> 人 · ' +
+                    (range ? '排班范围 <b>' + range + '</b> · ' : '') +
+                    state.dates.length + ' 天';
+
+                queryBox.style.display = 'block';
+                hint.textContent = '输入姓名后按回车或点查询；支持姓或名的一部分模糊匹配。';
+
+                // 如果有上次关键词，自动查询
+                if (state.lastKeyword) {
+                    kwInput.value = state.lastKeyword;
+                    doQuery(); // 内部会保存缓存
+                } else {
+                    // 无关键词，清空结果并提示
+                    resultBox.style.display = 'block';
+                    resultBox.innerHTML = '<div class="empty"><span class="empty-icon">👆</span>输入姓名开始查询</div>';
+                }
+
+                return true;
             }
 
-            // ===== 事件绑定 =====
-            // 上传
-            drop.addEventListener('click', function() { fileInput.click(); });
-            fileInput.addEventListener('change', function() { loadFile(fileInput.files[0]); });
+            // ===== 初始化 =====
+            function init() {
+                // 尝试恢复缓存
+                var restored = restoreFromCache();
 
-            ['dragover', 'dragenter'].forEach(function(ev) {
-                drop.addEventListener(ev, function(e) {
-                    e.preventDefault();
-                    drop.classList.add('dragover');
-                });
-            });
-            ['dragleave', 'drop'].forEach(function(ev) {
-                drop.addEventListener(ev, function(e) {
-                    e.preventDefault();
-                    drop.classList.remove('dragover');
-                });
-            });
-            drop.addEventListener('drop', function(e) {
-                if (e.dataTransfer.files.length) loadFile(e.dataTransfer.files[0]);
-            });
-
-            // 查询
-            btn.addEventListener('click', doQuery);
-            kwInput.addEventListener('input', function() {
-                var v = this.value.trim().toLowerCase();
-                if (v && state.loaded) showDatalist(v);
-                else datalist.style.display = 'none';
-            });
-            kwInput.addEventListener('keydown', function(e) {
-                if (e.key === 'Enter') {
-                    datalist.style.display = 'none';
-                    doQuery();
+                if (!restored) {
+                    // 无缓存，显示默认状态
+                    resultBox.style.display = 'block';
+                    resultBox.innerHTML = '<div class="empty"><span class="empty-icon">📂</span>请上传 Excel 排班表开始查询</div>';
                 }
-            });
-            document.addEventListener('click', function(e) {
-                if (!e.target.closest('.box')) datalist.style.display = 'none';
-            });
 
-            // 窗口resize
-            window.addEventListener('resize', handleResize);
+                // ---- 事件绑定 ----
+                drop.addEventListener('click', function() { fileInput.click(); });
+                fileInput.addEventListener('change', function() { loadFile(fileInput.files[0]); });
 
-            // ===== 初始占位 =====
-            resultBox.style.display = 'block';
-            resultBox.innerHTML = '<div class="empty"><span class="empty-icon">📂</span>请上传 Excel 排班表开始查询</div>';
+                ['dragover', 'dragenter'].forEach(function(ev) {
+                    drop.addEventListener(ev, function(e) {
+                        e.preventDefault();
+                        drop.classList.add('dragover');
+                    });
+                });
+                ['dragleave', 'drop'].forEach(function(ev) {
+                    drop.addEventListener(ev, function(e) {
+                        e.preventDefault();
+                        drop.classList.remove('dragover');
+                    });
+                });
+                drop.addEventListener('drop', function(e) {
+                    if (e.dataTransfer.files.length) loadFile(e.dataTransfer.files[0]);
+                });
+
+                btn.addEventListener('click', doQuery);
+                kwInput.addEventListener('input', function() {
+                    var v = this.value.trim().toLowerCase();
+                    if (v && state.loaded) showDatalist(v);
+                    else datalist.style.display = 'none';
+                });
+                kwInput.addEventListener('keydown', function(e) {
+                    if (e.key === 'Enter') {
+                        datalist.style.display = 'none';
+                        doQuery();
+                    }
+                });
+                document.addEventListener('click', function(e) {
+                    if (!e.target.closest('.box')) datalist.style.display = 'none';
+                });
+
+                // 窗口resize重绘（保持响应式）
+                var resizeTimer = null;
+                window.addEventListener('resize', function() {
+                    if (resizeTimer) clearTimeout(resizeTimer);
+                    resizeTimer = setTimeout(function() {
+                        if (state.loaded && state.lastKeyword) {
+                            var matches = state.people.filter(function(p) {
+                                return p.name.toLowerCase().indexOf(state.lastKeyword) >= 0;
+                            });
+                            renderResult(matches);
+                        }
+                        resizeTimer = null;
+                    }, 200);
+                });
+            }
+
+            // 启动
+            init();
 
         })();
     </script>
