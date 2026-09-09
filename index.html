@@ -1,352 +1,1182 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>排班查询 · 上传 Excel 按姓名查排班</title>
-<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-<style>
-  :root{
-    --bg:#f4f6f9; --card:#ffffff; --line:#e4e8ef; --ink:#1f2733;
-    --muted:#7a8595; --accent:#2f6fed; --accent-soft:#eaf1ff;
-    --work:#2563eb; --rest:#dc2626; --special:#7c3aed; --ok:#16a34a;
-  }
-  *{box-sizing:border-box;margin:0;padding:0}
-  body{
-    font-family:"PingFang SC","Microsoft YaHei","Noto Sans SC",system-ui,-apple-system,sans-serif;
-    background:var(--bg); color:var(--ink); line-height:1.5;
-    -webkit-font-smoothing:antialiased;
-  }
-  .wrap{max-width:1080px;margin:0 auto;padding:28px 20px 60px}
-  header h1{font-size:24px;font-weight:700;letter-spacing:.5px}
-  header p{color:var(--muted);margin-top:6px;font-size:14px}
-  .sub{font-size:12.5px;color:var(--muted)}
-  /* 上传区 */
-  .drop{
-    margin-top:22px;background:var(--card);border:2px dashed var(--line);
-    border-radius:14px;padding:40px 20px;text-align:center;cursor:pointer;
-    transition:border-color .2s, background .2s;
-  }
-  .drop:hover,.drop.dragover{border-color:var(--accent);background:var(--accent-soft)}
-  .drop .big{font-size:15px;font-weight:600}
-  .drop .small{color:var(--muted);font-size:12.5px;margin-top:6px}
-  .drop input{display:none}
-  .fileinfo{display:none;margin-top:16px;background:var(--accent-soft);
-    border:1px solid #cdddfb;border-radius:10px;padding:12px 16px;font-size:13.5px}
-  .fileinfo b{color:var(--accent)}
-  /* 查询区 */
-  .query{display:none;margin-top:24px}
-  .qbar{display:flex;gap:10px;flex-wrap:wrap;align-items:stretch}
-  .qbar .box{flex:1;min-width:240px;position:relative}
-  .qbar input{
-    width:100%;padding:12px 14px;font-size:16px;border:1px solid var(--line);
-    border-radius:10px;background:var(--card);outline:none;transition:border-color .2s;
-  }
-  .qbar input:focus{border-color:var(--accent)}
-  .qbar button{
-    padding:12px 22px;font-size:15px;font-weight:600;color:#fff;background:var(--accent);
-    border:none;border-radius:10px;cursor:pointer;transition:opacity .2s;
-  }
-  .qbar button:hover{opacity:.88}
-  .hint{color:var(--muted);font-size:12.5px;margin-top:10px}
-  .datalist{position:absolute;top:calc(100% + 4px);left:0;right:0;background:var(--card);
-    border:1px solid var(--line);border-radius:10px;box-shadow:0 8px 24px rgba(20,30,60,.08);
-    max-height:260px;overflow:auto;display:none;z-index:20}
-  .datalist div{padding:9px 14px;font-size:14px;cursor:pointer}
-  .datalist div:hover{background:var(--accent-soft)}
-  /* 结果 */
-  .result{display:none;margin-top:22px}
-  .pcard{
-    background:var(--card);border:1px solid var(--line);border-radius:14px;
-    padding:16px 18px;display:flex;flex-wrap:wrap;gap:8px 28px;align-items:center;
-  }
-  .pcard .name{font-size:20px;font-weight:700}
-  .pcard .meta{color:var(--muted);font-size:13.5px}
-  .pcard .meta b{color:var(--ink);font-weight:600}
-  .stats{margin-left:auto;font-size:13px;color:var(--muted)}
-  .stats b{color:var(--ink)}
-  .tbl{background:var(--card);border:1px solid var(--line);border-radius:14px;
-    margin-top:16px;overflow:hidden}
-  .tbl-scroll{overflow-x:auto;max-height:480px;overflow-y:auto}
-  table{border-collapse:collapse;width:100%;min-width:640px}
-  th,td{padding:10px 12px;font-size:13.5px;text-align:center;border-bottom:1px solid var(--line);
-    white-space:nowrap}
-  thead th{position:sticky;top:0;background:#f8fafc;font-weight:600;color:#5b6472;z-index:5;
-    border-bottom:1px solid var(--line)}
-  tbody tr:nth-child(even){background:#fafbfd}
-  td.date{text-align:left;color:var(--muted)}
-  .code{font-weight:700;font-variant-numeric:tabular-nums}
-  .c-work{color:var(--work)}
-  .c-rest{color:var(--rest)}
-  .c-special{color:var(--special)}
-  .chip{display:inline-block;padding:2px 9px;border-radius:999px;font-size:12.5px;font-weight:600}
-  .chip-work{background:#e8f0ff;color:var(--work)}
-  .chip-rest{background:#fee2e2;color:var(--rest)}
-  .chip-special{background:#f1e9ff;color:var(--special)}
-  .empty{background:var(--card);border:1px solid var(--line);border-radius:14px;
-    padding:34px;text-align:center;color:var(--muted);margin-top:16px}
-  .legend{margin-top:14px;font-size:12px;color:var(--muted);display:flex;gap:18px;flex-wrap:wrap}
-  .legend span{display:inline-flex;align-items:center;gap:6px}
-  .dot{width:10px;height:10px;border-radius:3px;display:inline-block}
-  .dot-w{background:var(--work)} .dot-r{background:var(--rest)} .dot-s{background:var(--special)}
-  @media (max-width:600px){
-    .wrap{padding:18px 12px 40px}
-    .qbar .box{min-width:100%}
-    .pcard .stats{margin-left:0;width:100%}
-  }
-</style>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>排班查询 · 上传 Excel 按姓名查排班</title>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js">
+    </script>
+    <style>
+        /* ===== 全局重置 & 变量 ===== */
+        :root {
+            --bg: #f0f4ff;
+            --card: #ffffff;
+            --border: #e2e8f0;
+            --ink: #0f172a;
+            --muted: #64748b;
+            --primary: #4f6ef7;
+            --primary-dark: #3b56d9;
+            --primary-light: #e8edff;
+            --primary-gradient: linear-gradient(135deg, #4f6ef7, #7c5cfc);
+            --shadow: 0 4px 24px rgba(79, 110, 247, 0.12);
+            --shadow-hover: 0 8px 40px rgba(79, 110, 247, 0.20);
+            --radius: 16px;
+            --radius-sm: 10px;
+            --work: #2563eb;
+            --work-bg: #dbeafe;
+            --rest: #dc2626;
+            --rest-bg: #fee2e2;
+            --special: #7c3aed;
+            --special-bg: #ede9fe;
+            --transition: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        body {
+            font-family: "PingFang SC", "Microsoft YaHei", "Noto Sans SC", system-ui, -apple-system, sans-serif;
+            background: var(--bg);
+            color: var(--ink);
+            line-height: 1.6;
+            -webkit-font-smoothing: antialiased;
+            padding: 0 0 48px;
+            min-height: 100vh;
+        }
+
+        /* ===== 容器 ===== */
+        .wrap {
+            max-width: 1080px;
+            margin: 0 auto;
+            padding: 20px 16px 40px;
+        }
+
+        /* ===== 头部 ===== */
+        .header {
+            background: var(--primary-gradient);
+            border-radius: var(--radius);
+            padding: 24px 20px 20px;
+            color: #fff;
+            box-shadow: 0 6px 32px rgba(79, 110, 247, 0.30);
+            position: relative;
+            overflow: hidden;
+        }
+        .header::after {
+            content: "";
+            position: absolute;
+            right: -40px;
+            top: -40px;
+            width: 140px;
+            height: 140px;
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: 50%;
+        }
+        .header::before {
+            content: "";
+            position: absolute;
+            left: -20px;
+            bottom: -60px;
+            width: 100px;
+            height: 100px;
+            background: rgba(255, 255, 255, 0.06);
+            border-radius: 50%;
+        }
+        .header h1 {
+            font-size: 22px;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            position: relative;
+            z-index: 1;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .header h1 span {
+            font-size: 26px;
+        }
+        .header p {
+            font-size: 14px;
+            opacity: 0.88;
+            margin-top: 4px;
+            position: relative;
+            z-index: 1;
+            font-weight: 400;
+        }
+        .header .badge {
+            display: inline-block;
+            background: rgba(255, 255, 255, 0.20);
+            padding: 2px 12px;
+            border-radius: 999px;
+            font-size: 11px;
+            font-weight: 500;
+            margin-top: 10px;
+            position: relative;
+            z-index: 1;
+            backdrop-filter: blur(4px);
+        }
+
+        /* ===== 上传区 ===== */
+        .drop {
+            margin-top: 20px;
+            background: var(--card);
+            border: 2px dashed var(--border);
+            border-radius: var(--radius);
+            padding: 36px 16px 32px;
+            text-align: center;
+            cursor: pointer;
+            transition: border-color var(--transition), background var(--transition), box-shadow var(--transition);
+            box-shadow: var(--shadow);
+            position: relative;
+        }
+        .drop:hover,
+        .drop.dragover {
+            border-color: var(--primary);
+            background: var(--primary-light);
+            box-shadow: var(--shadow-hover);
+        }
+        .drop .icon {
+            font-size: 42px;
+            line-height: 1;
+            margin-bottom: 8px;
+            display: block;
+        }
+        .drop .big {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--ink);
+        }
+        .drop .small {
+            color: var(--muted);
+            font-size: 13px;
+            margin-top: 4px;
+        }
+        .drop .small b {
+            color: var(--primary);
+            font-weight: 600;
+        }
+        .drop input {
+            display: none;
+        }
+
+        /* ===== 文件信息 ===== */
+        .fileinfo {
+            display: none;
+            margin-top: 14px;
+            background: var(--primary-light);
+            border: 1px solid #cdddfb;
+            border-radius: var(--radius-sm);
+            padding: 12px 16px;
+            font-size: 13px;
+            line-height: 1.7;
+            color: var(--ink);
+            box-shadow: var(--shadow);
+            animation: fadeUp 0.3s ease;
+        }
+        .fileinfo b {
+            color: var(--primary);
+            font-weight: 600;
+        }
+        .fileinfo .icon-ok {
+            color: #16a34a;
+            margin-right: 4px;
+        }
+
+        /* ===== 查询区 ===== */
+        .query {
+            display: none;
+            margin-top: 20px;
+        }
+        .qbar {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            align-items: stretch;
+        }
+        .qbar .box {
+            flex: 1;
+            min-width: 100%;
+            position: relative;
+        }
+        .qbar input {
+            width: 100%;
+            padding: 14px 16px;
+            font-size: 16px;
+            border: 2px solid var(--border);
+            border-radius: var(--radius-sm);
+            background: var(--card);
+            outline: none;
+            transition: border-color var(--transition), box-shadow var(--transition);
+            box-shadow: var(--shadow);
+            color: var(--ink);
+            font-weight: 500;
+            height: 52px;
+        }
+        .qbar input::placeholder {
+            color: var(--muted);
+            font-weight: 400;
+        }
+        .qbar input:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 4px rgba(79, 110, 247, 0.12), var(--shadow);
+        }
+        .qbar button {
+            width: 100%;
+            padding: 0 28px;
+            font-size: 16px;
+            font-weight: 600;
+            color: #fff;
+            background: var(--primary-gradient);
+            border: none;
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            transition: transform var(--transition), box-shadow var(--transition);
+            box-shadow: 0 4px 16px rgba(79, 110, 247, 0.30);
+            height: 52px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            letter-spacing: 0.3px;
+        }
+        .qbar button:active {
+            transform: scale(0.97);
+        }
+        .qbar button:hover {
+            box-shadow: 0 6px 24px rgba(79, 110, 247, 0.40);
+        }
+        .qbar button .btn-icon {
+            font-size: 18px;
+        }
+
+        /* 下拉建议 */
+        .datalist {
+            position: absolute;
+            top: calc(100% + 4px);
+            left: 0;
+            right: 0;
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            box-shadow: 0 12px 40px rgba(15, 23, 42, 0.12);
+            max-height: 220px;
+            overflow: auto;
+            display: none;
+            z-index: 99;
+            padding: 6px 0;
+        }
+        .datalist div {
+            padding: 10px 16px;
+            font-size: 14px;
+            cursor: pointer;
+            min-height: 44px;
+            display: flex;
+            align-items: center;
+            transition: background var(--transition);
+            color: var(--ink);
+            border-bottom: 1px solid var(--border);
+        }
+        .datalist div:last-child {
+            border-bottom: none;
+        }
+        .datalist div:hover {
+            background: var(--primary-light);
+        }
+        .datalist div .hint-text {
+            color: var(--muted);
+            font-size: 12px;
+            margin-left: 8px;
+        }
+
+        .hint {
+            color: var(--muted);
+            font-size: 12px;
+            margin-top: 8px;
+            line-height: 1.5;
+            padding-left: 4px;
+        }
+
+        /* ===== 结果区 ===== */
+        .result {
+            display: none;
+            margin-top: 20px;
+            animation: fadeUp 0.35s ease;
+        }
+
+        /* ===== 人员卡片 ===== */
+        .pcard {
+            background: var(--card);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            padding: 16px 18px;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            margin-bottom: 4px;
+            border: 1px solid var(--border);
+        }
+        .pcard-top {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 6px 16px;
+        }
+        .pcard .name {
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--ink);
+            letter-spacing: 0.3px;
+        }
+        .pcard .meta {
+            color: var(--muted);
+            font-size: 13px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px 14px;
+        }
+        .pcard .meta b {
+            color: var(--ink);
+            font-weight: 600;
+        }
+        .pcard .stats {
+            font-size: 13px;
+            color: var(--muted);
+            margin-left: auto;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+        .pcard .stats .num {
+            font-weight: 700;
+            color: var(--ink);
+        }
+        .pcard .stats .num-work {
+            color: var(--work);
+        }
+        .pcard .stats .num-rest {
+            color: var(--rest);
+        }
+
+        /* ===== 排班列表（卡片视图 - 移动端默认） ===== */
+        .shift-list {
+            margin-top: 14px;
+            border-radius: var(--radius-sm);
+            overflow: hidden;
+            border: 1px solid var(--border);
+            background: var(--card);
+            box-shadow: var(--shadow);
+        }
+
+        /* 使用grid实现三列等分 */
+        .shift-item {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            align-items: center;
+            padding: 10px 14px;
+            border-bottom: 1px solid var(--border);
+            transition: background var(--transition);
+            gap: 8px;
+            text-align: center;
+        }
+        .shift-item:last-child {
+            border-bottom: none;
+        }
+        .shift-item:nth-child(even) {
+            background: #fafbff;
+        }
+
+        /* 标题行 */
+        .shift-header {
+            background: #f1f5f9 !important;
+            font-weight: 700;
+            color: var(--ink);
+            border-bottom: 2px solid var(--border);
+            font-size: 12.5px;
+            letter-spacing: 0.3px;
+            padding: 8px 14px;
+        }
+        .shift-header .s-date,
+        .shift-header .s-week,
+        .shift-header .s-shift {
+            color: var(--ink);
+            font-weight: 700;
+        }
+
+        /* 单元格内容 */
+        .shift-item .s-date,
+        .shift-item .s-week,
+        .shift-item .s-shift {
+            font-weight: 600;
+            color: var(--ink);  /* 统一深色 */
+            font-size: 12.5px;
+            text-align: center;
+            justify-self: center;
+            width: 100%;
+        }
+        .shift-item .s-week {
+            /* 颜色与日期一致 */
+            color: var(--ink);
+        }
+
+        .shift-item .s-shift .chip {
+            display: inline-block;
+            padding: 2px 14px;
+            border-radius: 999px;
+            font-size: 12px;
+            font-weight: 600;
+            line-height: 1.6;
+            letter-spacing: 0.2px;
+        }
+        .chip-work {
+            background: var(--work-bg);
+            color: var(--work);
+        }
+        .chip-rest {
+            background: var(--rest-bg);
+            color: var(--rest);
+        }
+        .chip-special {
+            background: var(--special-bg);
+            color: var(--special);
+        }
+        .chip-empty {
+            background: #f1f5f9;
+            color: var(--muted);
+            font-weight: 400;
+        }
+
+        /* ===== 排班表格（桌面端） ===== */
+        .shift-table-wrap {
+            display: none;
+            margin-top: 14px;
+            border-radius: var(--radius-sm);
+            overflow: hidden;
+            border: 1px solid var(--border);
+            background: var(--card);
+            box-shadow: var(--shadow);
+        }
+        .shift-table-wrap table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+        .shift-table-wrap th,
+        .shift-table-wrap td {
+            padding: 10px 12px;
+            text-align: center;
+            border-bottom: 1px solid var(--border);
+        }
+        .shift-table-wrap thead th {
+            background: #f1f5f9;
+            font-weight: 700;
+            color: var(--ink);
+            font-size: 12.5px;
+            letter-spacing: 0.4px;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            border-bottom: 2px solid var(--border);
+        }
+        .shift-table-wrap tbody tr:nth-child(even) {
+            background: #fafbff;
+        }
+        .shift-table-wrap tbody tr:hover {
+            background: var(--primary-light);
+        }
+        /* 表格内三列等宽（自动） */
+        .shift-table-wrap td.date-cell,
+        .shift-table-wrap td.week-cell,
+        .shift-table-wrap td.shift-cell {
+            font-weight: 600;
+            color: var(--ink);  /* 统一深色 */
+            font-size: 12.5px;
+            text-align: center;
+        }
+        .shift-table-wrap td.shift-cell .chip {
+            display: inline-block;
+            padding: 2px 14px;
+            border-radius: 999px;
+            font-size: 12px;
+            font-weight: 600;
+            line-height: 1.6;
+        }
+
+        /* ===== 空状态 ===== */
+        .empty {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 32px 20px;
+            text-align: center;
+            color: var(--muted);
+            font-size: 14px;
+            box-shadow: var(--shadow);
+        }
+        .empty .empty-icon {
+            font-size: 40px;
+            display: block;
+            margin-bottom: 8px;
+        }
+        .empty b {
+            color: var(--ink);
+        }
+
+        /* ===== 图例 ===== */
+        .legend {
+            margin-top: 16px;
+            font-size: 12px;
+            color: var(--muted);
+            display: flex;
+            gap: 16px;
+            flex-wrap: wrap;
+            background: var(--card);
+            padding: 10px 16px;
+            border-radius: var(--radius-sm);
+            border: 1px solid var(--border);
+            box-shadow: var(--shadow);
+        }
+        .legend span {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .legend .dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 3px;
+            display: inline-block;
+            flex-shrink: 0;
+        }
+        .dot-w {
+            background: var(--work);
+        }
+        .dot-r {
+            background: var(--rest);
+        }
+        .dot-s {
+            background: var(--special);
+        }
+
+        /* ===== 动画 ===== */
+        @keyframes fadeUp {
+            from {
+                opacity: 0;
+                transform: translateY(12px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* ============================================================
+                   响应式：平板 & 桌面
+                   ============================================================ */
+        @media (min-width: 640px) {
+            .wrap {
+                padding: 24px 24px 48px;
+            }
+            .header {
+                padding: 28px 28px 24px;
+            }
+            .header h1 {
+                font-size: 26px;
+            }
+            .header p {
+                font-size: 15px;
+            }
+            .drop {
+                padding: 44px 24px 38px;
+            }
+            .drop .icon {
+                font-size: 50px;
+            }
+            .drop .big {
+                font-size: 18px;
+            }
+            .qbar .box {
+                min-width: 220px;
+            }
+            .qbar button {
+                width: auto;
+                min-width: 120px;
+            }
+            .pcard {
+                padding: 18px 22px;
+                flex-direction: row;
+                flex-wrap: wrap;
+                align-items: center;
+                gap: 4px 20px;
+            }
+            .pcard .stats {
+                margin-left: auto;
+            }
+            .shift-item {
+                padding: 10px 18px;
+                gap: 12px;
+            }
+            .shift-item .s-date,
+            .shift-item .s-week,
+            .shift-item .s-shift {
+                font-size: 13px;
+            }
+        }
+
+        @media (min-width: 820px) {
+            /* 桌面端：隐藏卡片列表，显示表格 */
+            .shift-list {
+                display: none !important;
+            }
+            .shift-table-wrap {
+                display: block !important;
+            }
+            .pcard .stats .num {
+                font-size: 14px;
+            }
+            .shift-table-wrap th,
+            .shift-table-wrap td {
+                padding: 12px 16px;
+                font-size: 13.5px;
+            }
+        }
+
+        /* 手机端：强制卡片列表显示，表格隐藏 */
+        @media (max-width: 819px) {
+            .shift-list {
+                display: block !important;
+            }
+            .shift-table-wrap {
+                display: none !important;
+            }
+            .shift-item {
+                padding: 8px 12px;
+                gap: 6px;
+            }
+            .shift-item .s-date,
+            .shift-item .s-week,
+            .shift-item .s-shift {
+                font-size: 11.5px;
+            }
+            .shift-item .s-shift .chip {
+                font-size: 11px;
+                padding: 1px 10px;
+            }
+            .pcard .stats {
+                font-size: 12px;
+                gap: 8px;
+            }
+            .pcard .name {
+                font-size: 18px;
+            }
+            .shift-header {
+                padding: 6px 12px;
+                font-size: 11.5px;
+            }
+        }
+
+        /* 小屏手机极端优化 */
+        @media (max-width: 400px) {
+            .shift-item {
+                padding: 6px 10px;
+                gap: 4px;
+            }
+            .shift-item .s-date,
+            .shift-item .s-week,
+            .shift-item .s-shift {
+                font-size: 10.5px;
+            }
+            .shift-item .s-shift .chip {
+                font-size: 10px;
+                padding: 1px 8px;
+            }
+            .shift-header {
+                padding: 5px 10px;
+                font-size: 10.5px;
+            }
+            .header h1 {
+                font-size: 18px;
+            }
+            .header p {
+                font-size: 12px;
+            }
+            .qbar input {
+                font-size: 14px;
+                padding: 12px 14px;
+                height: 46px;
+            }
+            .qbar button {
+                font-size: 14px;
+                height: 46px;
+                padding: 0 18px;
+            }
+            .drop {
+                padding: 24px 12px 20px;
+            }
+            .drop .icon {
+                font-size: 34px;
+            }
+            .drop .big {
+                font-size: 14px;
+            }
+        }
+    </style>
 </head>
 <body>
-<div class="wrap">
-  <header>
-    <h1>排班查询</h1>
-    <p>上传排班表（Excel），输入姓名即可查看该员工每天的排班。</p>
-  </header>
-  <!-- 上传 -->
-  <div class="drop" id="drop">
-    <div class="big">点击选择，或把 Excel 文件拖到这里</div>
-    <div class="small">支持 .xlsx / .xls / .csv</div>
-    <input type="file" id="file" accept=".xlsx,.xls,.csv">
-  </div>
-  <div class="fileinfo" id="fileinfo"></div>
-  <!-- 查询 -->
-  <div class="query" id="query">
-    <div class="qbar">
-      <div class="box">
-        <input id="kw" type="text" placeholder="输入姓名查询（支持模糊匹配）" autocomplete="off">
-        <div class="datalist" id="datalist"></div>
-      </div>
-      <button id="btn">查询</button>
+
+    <div class="wrap">
+
+        <!-- ===== 头部 ===== -->
+        <header class="header">
+            <h1><span>📋</span> 排班查询</h1>
+            <p>上传排班表（Excel），输入姓名即可查看该员工每天的排班。</p>
+            <div class="badge">📁 支持 .xlsx · .xls · .csv</div>
+        </header>
+
+        <!-- ===== 上传区 ===== -->
+        <div class="drop" id="drop">
+            <span class="icon">📤</span>
+            <div class="big">点击上传，或把 Excel 文件拖到这里</div>
+            <div class="small">支持 <b>.xlsx</b> · <b>.xls</b> · <b>.csv</b></div>
+            <input type="file" id="file" accept=".xlsx,.xls,.csv" />
+        </div>
+
+        <!-- ===== 文件信息 ===== -->
+        <div class="fileinfo" id="fileinfo"></div>
+
+        <!-- ===== 查询区 ===== -->
+        <div class="query" id="query">
+            <div class="qbar">
+                <div class="box">
+                    <input id="kw" type="text" placeholder="输入姓名查询（支持模糊匹配）" autocomplete="off" />
+                    <div class="datalist" id="datalist"></div>
+                </div>
+                <button id="btn"><span class="btn-icon">🔍</span> 查询</button>
+            </div>
+            <div class="hint" id="hint">输入姓名后按回车或点查询；支持姓或名的一部分模糊匹配。</div>
+        </div>
+
+        <!-- ===== 结果区 ===== -->
+        <div class="result" id="result"></div>
+
+        <!-- ===== 图例 ===== -->
+        <div class="legend" id="legend">
+            <span><span class="dot dot-w"></span> 有排班（数字班次）</span>
+            <span><span class="dot dot-r"></span> 0（休 / 无班）</span>
+            <span><span class="dot dot-s"></span> X 类班次（特殊）</span>
+        </div>
+
     </div>
-    <div class="hint" id="hint"></div>
-  </div>
-  <!-- 结果 -->
-  <div class="result" id="result"></div>
-  <div class="legend" id="legend">
-    <span><i class="dot dot-w"></i>有排班（数字班次）</span>
-    <span><i class="dot dot-r"></i>0（休 / 无班）</span>
-    <span><i class="dot dot-s"></i>X 类班次（特殊）</span>
-  </div>
-</div>
-<script>
-(function(){
-  "use strict";
-  var $=function(id){return document.getElementById(id);};
-  var state={ people:[], dates:[], weekdays:[], loaded:false };
-  // ---- 工具 ----
-  function excelSerialToDate(serial){
-    if(serial instanceof Date) return new Date(serial.getTime());
-    if(typeof serial==="number" && serial>10000){
-      // Excel 序列号 -> JS Date（1900 系统，25569 为 1970-01-01 偏移）
-      return new Date(Math.round((serial-25569)*86400*1000));
-    }
-    return null;
-  }
-  function fmtDate(d){
-    if(!d || isNaN(d)) return "";
-    var p=function(n){return n<10?"0"+n:""+n};
-    return d.getFullYear()+"-"+p(d.getMonth()+1)+"-"+p(d.getDate());
-  }
-  function fmtShort(d){
-    if(!d || isNaN(d)) return "";
-    var p=function(n){return n<10?"0"+n:""+n};
-    return p(d.getMonth()+1)+"/"+p(d.getDate());
-  }
-  function wdCN(d){return ["日","一","二","三","四","五","六"][d.getDay()];}
-  // ---- 解析 ----
-  function parseWorkbook(wb){
-    var sheet=wb.Sheets[wb.SheetNames[0]];
-    var rows=XLSX.utils.sheet_to_json(sheet,{header:1,defval:null,raw:true});
-    if(!rows || rows.length<3) throw new Error("表内容为空或行数不足");
-    // 定位表头行（含"姓名"）与"组别/工号"列
-    var headIdx=-1, nameCol=-1, groupCol=-1, idCol=-1;
-    for(var r=0;r<Math.min(6,rows.length);r++){
-      var row=rows[r]||[];
-      for(var c=0;c<row.length;c++){
-        var v=row[c];
-        if(typeof v==="string" && v.indexOf("姓名")>=0){ headIdx=r; nameCol=c; }
-        if(typeof v==="string" && v.indexOf("组别")>=0) groupCol=c;
-        if(typeof v==="string" && v.indexOf("工号")>=0) idCol=c;
-      }
-      if(headIdx>=0) break;
-    }
-    if(headIdx<0 || nameCol<0){ throw new Error("未找到表头行（缺少“姓名”列）"); }
-    var dateRow=rows[headIdx+1]||[];
-    // 收集日期列：表头为“星期”开头的列
-    var cols=[];
-    var headRow=rows[headIdx]||[];
-    for(var i=0;i<headRow.length;i++){
-      var h=headRow[i];
-      if(typeof h==="string" && h.indexOf("星期")>=0){
-        cols.push(i);
-      }
-    }
-    if(cols.length===0){
-      // 兜底：姓名列之后的所有列
-      for(var j=nameCol+1;j<headRow.length;j++) cols.push(j);
-    }
-    var dates=[], weekdays=[];
-    for(var k=0;k<cols.length;k++){
-      var c2=cols[k];
-      var dv=dateRow[c2];
-      var d=excelSerialToDate(dv);
-      var wd=null;
-      if(typeof headRow[c2]==="string"){
-        var m=headRow[c2].match(/星期([一二三四五六日])/);
-        if(m) wd=m[1];
-      }
-      dates.push(d); weekdays.push(wd||(d&&!isNaN(d)?wdCN(d):""));
-    }
-    // 提取人员
-    var people=[];
-    for(var r2=headIdx+2;r2<rows.length;r2++){
-      var row2=rows[r2]||[];
-      var nm=row2[nameCol];
-      if(nm===null||nm===undefined||String(nm).trim()==="") continue; // 跳过空行
-      var shifts={};
-      for(var ci=0;ci<cols.length;ci++){
-        var v2=row2[cols[ci]];
-        if(v2===null||v2===undefined) continue;
-        var key=cols[ci];
-        var val=(typeof v2==="number" && v2%1===0)?v2:String(v2).trim();
-        shifts[key]= (val==="0" || val===0) ? 0 : val;
-      }
-      people.push({
-        name:String(nm).trim(),
-        group:groupCol>=0 && row2[groupCol]!=null?String(row2[groupCol]).trim():"",
-        id:idCol>=0 && row2[idCol]!=null?String(row2[idCol]).trim():"",
-        cols:cols.slice(),
-        shifts:shifts
-      });
-    }
-    if(people.length===0) throw new Error("未解析到任何人员数据");
-    state.people=people; state.dates=dates; state.weekdays=weekdays; state.loaded=true;
-    return people.length;
-  }
-  function renderCellClass(code){
-    if(code===0 || code==="0") return {cls:"c-rest",chip:"chip-rest",label:"休"};
-    var s=String(code);
-    if(/^x/i.test(s)) return {cls:"c-special",chip:"chip-special",label:s};
-    return {cls:"c-work",chip:"chip-work",label:s};
-  }
-  function renderResult(matches){
-    var res=$("result"); res.style.display="block"; res.innerHTML="";
-    var firstDate=state.dates.filter(function(d){return d&&!isNaN(d)});
-    if(matches.length===0){
-      res.innerHTML='<div class="empty">未找到该姓名，请检查是否输错，或换一个关键词（支持模糊匹配）。</div>';
-      return;
-    }
-    var frag=document.createDocumentFragment();
-    matches.forEach(function(p){
-      var card=document.createElement("div"); card.className="pcard";
-      var meta="";
-      if(p.group) meta+='<span class="meta">组别：<b>'+p.group+'</b></span>';
-      if(p.id) meta+='<span class="meta">工号：<b>'+p.id+'</b></span>';
-      var workCount=Object.keys(p.shifts).filter(function(k){return p.shifts[k]!==0 && p.shifts[k]!=="0"}).length;
-      var restCount=Object.keys(p.shifts).filter(function(k){return p.shifts[k]===0 || p.shifts[k]==="0"}).length;
-      card.innerHTML='<span class="name">'+p.name+'</span>'+meta+
-        '<span class="stats">有班 <b>'+workCount+'</b> 天 · 休 <b>'+restCount+'</b> 天</span>';
-      frag.appendChild(card);
-      var tbl=document.createElement("div"); tbl.className="tbl";
-      var sc=document.createElement("div"); sc.className="tbl-scroll";
-      var table=document.createElement("table");
-      var thead=document.createElement("thead"); var trh=document.createElement("tr");
-      trh.innerHTML="<th>日期</th><th>星期</th><th>班次</th>";
-      thead.appendChild(trh); table.appendChild(thead);
-      var tbody=document.createElement("tbody");
-      for(var i=0;i<p.cols.length;i++){
-        var key=p.cols[i];
-        var d=state.dates[i];
-        var code=p.shifts.hasOwnProperty(key)?p.shifts[key]:null;
-        var tr=document.createElement("tr");
-        var dateTxt=d&&!isNaN(d)?fmtDate(d):"";
-        var wdTxt=state.weekdays[i]||"";
-        if(code===null||code===undefined){
-          // 将 — 修改为未排班
-          tr.innerHTML='<td class="date">'+dateTxt+'</td><td>'+wdTxt+'</td><td>未排班</td>';
-        }else{
-          var rc=renderCellClass(code);
-          tr.innerHTML='<td class="date">'+dateTxt+'</td><td>'+wdTxt+'</td>'+
-            '<td><span class="chip '+rc.chip+'">'+rc.label+'</span></td>';
-        }
-        tbody.appendChild(tr);
-      }
-      table.appendChild(tbody); sc.appendChild(table); tbl.appendChild(sc); frag.appendChild(tbl);
-    });
-    res.appendChild(frag);
-  }
-  // ---- 事件 ----
-  function doQuery(){
-    if(!state.loaded) return;
-    var kw=$("kw").value.trim().toLowerCase();
-    if(!kw){ renderResult([]); $("result").innerHTML='<div class="empty">请输入姓名。</div>'; return; }
-    var matches=state.people.filter(function(p){ return p.name.toLowerCase().indexOf(kw)>=0; });
-    renderResult(matches);
-  }
-  function showDatalist(filter){
-    var dl=$("datalist");
-    var list=state.people.filter(function(p){ return filter? p.name.toLowerCase().indexOf(filter)>=0 : true; });
-    dl.innerHTML="";
-    if(list.length>8) list=list.slice(0,8);
-    list.forEach(function(p){
-      var div=document.createElement("div");
-      div.textContent=p.name+"  "+(p.group?"（"+p.group+"）":"");
-      div.addEventListener("click",function(){ $("kw").value=p.name; dl.style.display="none"; doQuery(); });
-      dl.appendChild(div);
-    });
-    dl.style.display=list.length?"block":"none";
-  }
-  function loadFile(file){
-    if(!file) return;
-    var reader=new FileReader();
-    reader.onload=function(e){
-      try{
-        var data=new Uint8Array(e.target.result);
-        var wb=XLSX.read(data,{type:"array",cellDates:true});
-        var n=parseWorkbook(wb);
-        var d0=state.dates[0], d1=state.dates[state.dates.length-1];
-        var range=(d0&&!isNaN(d0)&&d1&&!isNaN(d1))? (fmtDate(d0)+" 至 "+fmtDate(d1)) : "";
-        var fi=$("fileinfo");
-        fi.style.display="block";
-        fi.innerHTML='已读取文件 <b>'+file.name+'</b> · 共 <b>'+n+'</b> 人 · '+
-          (range?('排班范围 <b>'+range+'</b> · '):'')+state.dates.length+' 天';
-        $("query").style.display="block";
-        $("hint").textContent="输入姓名后回车或点查询；可输入姓或名的一部分进行模糊匹配。";
-        $("kw").focus();
-        renderResult([]);
-        $("result").innerHTML="";
-      }catch(err){
-        $("query").style.display="none";
-        $("result").style.display="block";
-        $("result").innerHTML='<div class="empty">解析失败：'+err.message+'</div>';
-      }
-    };
-    reader.readAsArrayBuffer(file);
-  }
-  var drop=$("drop"), fi=$("file");
-  drop.addEventListener("click",function(){ fi.click(); });
-  fi.addEventListener("change",function(){ loadFile(fi.files[0]); });
-  ["dragover","dragenter"].forEach(function(ev){
-    drop.addEventListener(ev,function(e){ e.preventDefault(); drop.classList.add("dragover"); });
-  });
-  ["dragleave","drop"].forEach(function(ev){
-    drop.addEventListener(ev,function(e){ e.preventDefault(); drop.classList.remove("dragover"); });
-  });
-  drop.addEventListener("drop",function(e){
-    if(e.dataTransfer.files.length) loadFile(e.dataTransfer.files[0]);
-  });
-  $("btn").addEventListener("click",doQuery);
-  $("kw").addEventListener("input",function(){
-    var v=this.value.trim().toLowerCase();
-    if(v) showDatalist(v); else $("datalist").style.display="none";
-  });
-  $("kw").addEventListener("keydown",function(e){
-    if(e.key==="Enter"){ $("datalist").style.display="none"; doQuery(); }
-  });
-  document.addEventListener("click",function(e){
-    if(!e.target.closest(".box")) $("datalist").style.display="none";
-  });
-})();
-</script>
+
+    <script>
+        (function() {
+            "use strict";
+
+            // ===== DOM 引用 =====
+            var $ = function(id) { return document.getElementById(id); };
+            var drop = $('drop');
+            var fileInput = $('file');
+            var fileInfo = $('fileinfo');
+            var queryBox = $('query');
+            var kwInput = $('kw');
+            var btn = $('btn');
+            var datalist = $('datalist');
+            var hint = $('hint');
+            var resultBox = $('result');
+
+            // ===== 状态 =====
+            var state = {
+                people: [],
+                dates: [],
+                weekdays: [],
+                loaded: false,
+                lastKeyword: ''
+            };
+
+            // ===== 工具 =====
+            function excelSerialToDate(serial) {
+                if (serial instanceof Date) return new Date(serial.getTime());
+                if (typeof serial === 'number' && serial > 10000) {
+                    return new Date(Math.round((serial - 25569) * 86400 * 1000));
+                }
+                return null;
+            }
+
+            function fmtDate(d) {
+                if (!d || isNaN(d)) return '';
+                var p = function(n) { return n < 10 ? '0' + n : '' + n; };
+                return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate());
+            }
+
+            function wdCN(d) {
+                return ['日', '一', '二', '三', '四', '五', '六'][d.getDay()];
+            }
+
+            function isMobile() {
+                return window.innerWidth < 820;
+            }
+
+            // ===== 解析 Excel =====
+            function parseWorkbook(wb) {
+                var sheet = wb.Sheets[wb.SheetNames[0]];
+                var rows = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: null, raw: true });
+                if (!rows || rows.length < 3) throw new Error('表内容为空或行数不足');
+
+                var headIdx = -1,
+                    nameCol = -1,
+                    groupCol = -1,
+                    idCol = -1;
+                for (var r = 0; r < Math.min(6, rows.length); r++) {
+                    var row = rows[r] || [];
+                    for (var c = 0; c < row.length; c++) {
+                        var v = row[c];
+                        if (typeof v === 'string' && v.indexOf('姓名') >= 0) { headIdx = r;
+                            nameCol = c; }
+                        if (typeof v === 'string' && v.indexOf('组别') >= 0) groupCol = c;
+                        if (typeof v === 'string' && v.indexOf('工号') >= 0) idCol = c;
+                    }
+                    if (headIdx >= 0) break;
+                }
+                if (headIdx < 0 || nameCol < 0) {
+                    throw new Error('未找到表头行（缺少“姓名”列）');
+                }
+
+                var dateRow = rows[headIdx + 1] || [];
+                var headRow = rows[headIdx] || [];
+                var cols = [];
+                for (var i = 0; i < headRow.length; i++) {
+                    var h = headRow[i];
+                    if (typeof h === 'string' && h.indexOf('星期') >= 0) {
+                        cols.push(i);
+                    }
+                }
+                if (cols.length === 0) {
+                    for (var j = nameCol + 1; j < headRow.length; j++) cols.push(j);
+                }
+
+                var dates = [],
+                    weekdays = [];
+                for (var k = 0; k < cols.length; k++) {
+                    var c2 = cols[k];
+                    var dv = dateRow[c2];
+                    var d = excelSerialToDate(dv);
+                    var wd = null;
+                    if (typeof headRow[c2] === 'string') {
+                        var m = headRow[c2].match(/星期([一二三四五六日])/);
+                        if (m) wd = m[1];
+                    }
+                    dates.push(d);
+                    weekdays.push(wd || (d && !isNaN(d) ? wdCN(d) : ''));
+                }
+
+                var people = [];
+                for (var r2 = headIdx + 2; r2 < rows.length; r2++) {
+                    var row2 = rows[r2] || [];
+                    var nm = row2[nameCol];
+                    if (nm === null || nm === undefined || String(nm).trim() === '') continue;
+                    var shifts = {};
+                    for (var ci = 0; ci < cols.length; ci++) {
+                        var v2 = row2[cols[ci]];
+                        if (v2 === null || v2 === undefined) continue;
+                        var key = cols[ci];
+                        var val = (typeof v2 === 'number' && v2 % 1 === 0) ? v2 : String(v2).trim();
+                        shifts[key] = (val === '0' || val === 0) ? 0 : val;
+                    }
+                    people.push({
+                        name: String(nm).trim(),
+                        group: groupCol >= 0 && row2[groupCol] != null ? String(row2[groupCol]).trim() : '',
+                        id: idCol >= 0 && row2[idCol] != null ? String(row2[idCol]).trim() : '',
+                        cols: cols.slice(),
+                        shifts: shifts
+                    });
+                }
+                if (people.length === 0) throw new Error('未解析到任何人员数据');
+
+                state.people = people;
+                state.dates = dates;
+                state.weekdays = weekdays;
+                state.loaded = true;
+                return people.length;
+            }
+
+            // ===== 渲染辅助 =====
+            function renderCellClass(code) {
+                if (code === 0 || code === '0') {
+                    return { cls: 'chip-rest', label: '休' };
+                }
+                var s = String(code);
+                if (/^x/i.test(s)) {
+                    return { cls: 'chip-special', label: s };
+                }
+                return { cls: 'chip-work', label: s };
+            }
+
+            // ===== 渲染结果（根据屏幕宽度自动切换卡片/表格） =====
+            function renderResult(matches) {
+                resultBox.style.display = 'block';
+                resultBox.innerHTML = '';
+
+                if (!matches || matches.length === 0) {
+                    resultBox.innerHTML =
+                        '<div class="empty"><span class="empty-icon">🔍</span>未找到该姓名，请检查是否输错，或换一个关键词（支持模糊匹配）。</div>';
+                    return;
+                }
+
+                var frag = document.createDocumentFragment();
+
+                matches.forEach(function(p) {
+                    // ---- 人员信息卡片 ----
+                    var card = document.createElement('div');
+                    card.className = 'pcard';
+
+                    var workCount = Object.keys(p.shifts).filter(function(k) {
+                        return p.shifts[k] !== 0 && p.shifts[k] !== '0';
+                    }).length;
+                    var restCount = Object.keys(p.shifts).filter(function(k) {
+                        return p.shifts[k] === 0 || p.shifts[k] === '0';
+                    }).length;
+
+                    var metaHtml = '';
+                    if (p.group) metaHtml += '<span class="meta">组别：<b>' + p.group + '</b></span>';
+                    if (p.id) metaHtml += '<span class="meta">工号：<b>' + p.id + '</b></span>';
+
+                    card.innerHTML =
+                        '<div class="pcard-top">' +
+                        '<span class="name">' + p.name + '</span>' +
+                        metaHtml +
+                        '<span class="stats">' +
+                        '有班 <span class="num num-work">' + workCount + '</span> 天 · ' +
+                        '休 <span class="num num-rest">' + restCount + '</span> 天' +
+                        '</span>' +
+                        '</div>';
+                    frag.appendChild(card);
+
+                    // ---- 排班数据：卡片列表（移动端） & 表格（桌面端） ----
+                    // 卡片列表（始终生成，但桌面端用CSS隐藏）
+                    var listDiv = document.createElement('div');
+                    listDiv.className = 'shift-list';
+
+                    // 添加标题行（表头）
+                    var headerItem = document.createElement('div');
+                    headerItem.className = 'shift-item shift-header';
+                    headerItem.innerHTML =
+                        '<span class="s-date">日期</span>' +
+                        '<span class="s-week">星期</span>' +
+                        '<span class="s-shift">班次</span>';
+                    listDiv.appendChild(headerItem);
+
+                    // 数据行
+                    for (var i = 0; i < p.cols.length; i++) {
+                        var key = p.cols[i];
+                        var d = state.dates[i];
+                        var code = p.shifts.hasOwnProperty(key) ? p.shifts[key] : null;
+                        // 使用完整日期格式 YYYY-MM-DD
+                        var dateTxt = d && !isNaN(d) ? fmtDate(d) : '';
+                        var wdTxt = state.weekdays[i] || '';
+
+                        var item = document.createElement('div');
+                        item.className = 'shift-item';
+
+                        var shiftHtml = '';
+                        if (code === null || code === undefined) {
+                            shiftHtml = '<span class="chip chip-empty">未排</span>';
+                        } else {
+                            var rc = renderCellClass(code);
+                            shiftHtml = '<span class="chip ' + rc.cls + '">' + rc.label + '</span>';
+                        }
+
+                        item.innerHTML =
+                            '<span class="s-date">' + dateTxt + '</span>' +
+                            '<span class="s-week">' + wdTxt + '</span>' +
+                            '<span class="s-shift">' + shiftHtml + '</span>';
+
+                        listDiv.appendChild(item);
+                    }
+                    frag.appendChild(listDiv);
+
+                    // ---- 表格（桌面端） ----
+                    var tableWrap = document.createElement('div');
+                    tableWrap.className = 'shift-table-wrap';
+                    var table = document.createElement('table');
+                    var thead = document.createElement('thead');
+                    var trh = document.createElement('tr');
+                    trh.innerHTML = '<th>日期</th><th>星期</th><th>班次</th>';
+                    thead.appendChild(trh);
+                    table.appendChild(thead);
+
+                    var tbody = document.createElement('tbody');
+                    for (var j = 0; j < p.cols.length; j++) {
+                        var key2 = p.cols[j];
+                        var d2 = state.dates[j];
+                        var code2 = p.shifts.hasOwnProperty(key2) ? p.shifts[key2] : null;
+                        var dateTxt2 = d2 && !isNaN(d2) ? fmtDate(d2) : '';
+                        var wdTxt2 = state.weekdays[j] || '';
+
+                        var tr = document.createElement('tr');
+                        var shiftHtml2 = '';
+                        if (code2 === null || code2 === undefined) {
+                            shiftHtml2 = '<span class="chip chip-empty">未排</span>';
+                        } else {
+                            var rc2 = renderCellClass(code2);
+                            shiftHtml2 = '<span class="chip ' + rc2.cls + '">' + rc2.label + '</span>';
+                        }
+                        tr.innerHTML =
+                            '<td class="date-cell">' + dateTxt2 + '</td>' +
+                            '<td class="week-cell">' + wdTxt2 + '</td>' +
+                            '<td class="shift-cell">' + shiftHtml2 + '</td>';
+                        tbody.appendChild(tr);
+                    }
+                    table.appendChild(tbody);
+                    tableWrap.appendChild(table);
+                    frag.appendChild(tableWrap);
+                });
+
+                resultBox.appendChild(frag);
+            }
+
+            // ===== 查询逻辑 =====
+            function doQuery() {
+                if (!state.loaded) return;
+                var kw = kwInput.value.trim().toLowerCase();
+                state.lastKeyword = kw;
+                if (!kw) {
+                    renderResult([]);
+                    resultBox.innerHTML = '<div class="empty"><span class="empty-icon">✏️</span>请输入姓名。</div>';
+                    return;
+                }
+                var matches = state.people.filter(function(p) {
+                    return p.name.toLowerCase().indexOf(kw) >= 0;
+                });
+                renderResult(matches);
+            }
+
+            // ===== 下拉建议 =====
+            function showDatalist(filter) {
+                var list = state.people.filter(function(p) {
+                    return filter ? p.name.toLowerCase().indexOf(filter) >= 0 : true;
+                });
+                datalist.innerHTML = '';
+                if (list.length > 10) list = list.slice(0, 10);
+                list.forEach(function(p) {
+                    var div = document.createElement('div');
+                    var extra = p.group ? '（' + p.group + '）' : '';
+                    div.innerHTML = p.name + ' <span class="hint-text">' + extra + '</span>';
+                    div.addEventListener('click', function() {
+                        kwInput.value = p.name;
+                        datalist.style.display = 'none';
+                        doQuery();
+                    });
+                    datalist.appendChild(div);
+                });
+                datalist.style.display = list.length ? 'block' : 'none';
+            }
+
+            // ===== 加载文件 =====
+            function loadFile(file) {
+                if (!file) return;
+                var reader = new FileReader();
+                reader.onload = function(e) {
+                    try {
+                        var data = new Uint8Array(e.target.result);
+                        var wb = XLSX.read(data, { type: 'array', cellDates: true });
+                        var n = parseWorkbook(wb);
+
+                        var d0 = state.dates[0],
+                            d1 = state.dates[state.dates.length - 1];
+                        var range = (d0 && !isNaN(d0) && d1 && !isNaN(d1)) ? (fmtDate(d0) + ' 至 ' + fmtDate(d1)) : '';
+
+                        fileInfo.style.display = 'block';
+                        fileInfo.innerHTML =
+                            '✅ 已读取 <b>' + file.name + '</b> · 共 <b>' + n + '</b> 人 · ' +
+                            (range ? '排班范围 <b>' + range + '</b> · ' : '') +
+                            state.dates.length + ' 天';
+
+                        queryBox.style.display = 'block';
+                        hint.textContent = '输入姓名后按回车或点查询；支持姓或名的一部分模糊匹配。';
+                        kwInput.focus();
+
+                        // 清空旧结果
+                        resultBox.style.display = 'block';
+                        resultBox.innerHTML = '<div class="empty"><span class="empty-icon">👆</span>输入姓名开始查询</div>';
+
+                        // 如果有上次关键词，自动查询
+                        if (state.lastKeyword) {
+                            kwInput.value = state.lastKeyword;
+                            doQuery();
+                        }
+                    } catch (err) {
+                        queryBox.style.display = 'none';
+                        resultBox.style.display = 'block';
+                        resultBox.innerHTML = '<div class="empty"><span class="empty-icon">❌</span>解析失败：' + err
+                            .message + '</div>';
+                    }
+                };
+                reader.readAsArrayBuffer(file);
+            }
+
+            // ===== 窗口resize：重新渲染 =====
+            var resizeTimer = null;
+
+            function handleResize() {
+                if (resizeTimer) clearTimeout(resizeTimer);
+                resizeTimer = setTimeout(function() {
+                    if (state.loaded && state.lastKeyword) {
+                        var matches = state.people.filter(function(p) {
+                            return p.name.toLowerCase().indexOf(state.lastKeyword) >= 0;
+                        });
+                        renderResult(matches);
+                    }
+                    resizeTimer = null;
+                }, 200);
+            }
+
+            // ===== 事件绑定 =====
+            // 上传
+            drop.addEventListener('click', function() { fileInput.click(); });
+            fileInput.addEventListener('change', function() { loadFile(fileInput.files[0]); });
+
+            ['dragover', 'dragenter'].forEach(function(ev) {
+                drop.addEventListener(ev, function(e) {
+                    e.preventDefault();
+                    drop.classList.add('dragover');
+                });
+            });
+            ['dragleave', 'drop'].forEach(function(ev) {
+                drop.addEventListener(ev, function(e) {
+                    e.preventDefault();
+                    drop.classList.remove('dragover');
+                });
+            });
+            drop.addEventListener('drop', function(e) {
+                if (e.dataTransfer.files.length) loadFile(e.dataTransfer.files[0]);
+            });
+
+            // 查询
+            btn.addEventListener('click', doQuery);
+            kwInput.addEventListener('input', function() {
+                var v = this.value.trim().toLowerCase();
+                if (v && state.loaded) showDatalist(v);
+                else datalist.style.display = 'none';
+            });
+            kwInput.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter') {
+                    datalist.style.display = 'none';
+                    doQuery();
+                }
+            });
+            document.addEventListener('click', function(e) {
+                if (!e.target.closest('.box')) datalist.style.display = 'none';
+            });
+
+            // 窗口resize
+            window.addEventListener('resize', handleResize);
+
+            // ===== 初始占位 =====
+            resultBox.style.display = 'block';
+            resultBox.innerHTML = '<div class="empty"><span class="empty-icon">📂</span>请上传 Excel 排班表开始查询</div>';
+
+        })();
+    </script>
+
 </body>
 </html>
