@@ -121,6 +121,7 @@
             transition: border-color var(--transition), background var(--transition), box-shadow var(--transition);
             box-shadow: var(--shadow);
             position: relative;
+            -webkit-tap-highlight-color: transparent;
         }
         .drop:hover,
         .drop.dragover {
@@ -151,6 +152,280 @@
         .drop input {
             display: none;
         }
+
+        /* ===== 班次时间映射配置模块 ===== */
+        .mapcard {
+            margin-top: 20px;
+            background: var(--card);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border);
+            padding: 18px 16px 14px;
+        }
+        .mapcard-head {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin-bottom: 14px;
+        }
+        .mapcard-title {
+            font-size: 15px;
+            font-weight: 700;
+            color: var(--ink);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .mapcard-title .icon {
+            font-size: 17px;
+        }
+        .mapcard-desc {
+            font-size: 12px;
+            color: var(--muted);
+            margin-top: 3px;
+            line-height: 1.5;
+        }
+
+        /* 表头 + 数据行 共用同一 grid 栅格：班次 | 箭头 | 起始 | ~ | 结束 | 删除 */
+        .map-grid {
+            display: grid;
+            grid-template-columns: 62px 14px minmax(0, 1fr) 10px minmax(0, 1fr) 36px;
+            gap: 6px;
+            align-items: center;
+            width: 100%;
+        }
+        .map-head {
+            padding: 0 0 8px;
+            font-size: 12px;
+            color: var(--muted);
+            font-weight: 500;
+            letter-spacing: 0.3px;
+            border-bottom: 1px solid #eef1f7;
+            margin-bottom: 4px;
+        }
+        .map-head > span {
+            text-align: center;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .map-rows {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+        .map-row {
+            padding: 4px 2px;
+            border-bottom: 1px solid #f1f4f9;
+        }
+        .map-row:last-child {
+            border-bottom: none;
+        }
+
+        /* 输入框通用：轻量描边风格 */
+        .map-row input {
+            width: 100%;
+            min-width: 0;
+            padding: 7px 6px;
+            font-size: 13px;
+            border: 1px solid transparent;
+            border-radius: 8px;
+            background: #f5f7fb;
+            outline: none;
+            transition: border-color var(--transition), box-shadow var(--transition), background var(--transition);
+            color: var(--ink);
+            height: 38px;
+            font-weight: 500;
+            text-align: center;
+            font-family: inherit;
+            font-variant-numeric: tabular-nums;
+            -webkit-appearance: none;
+            appearance: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .map-row input:hover {
+            background: #eef1f8;
+        }
+        .map-row input:focus,
+        .map-row input:focus-visible {
+            background: #fff;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(79, 110, 247, 0.12);
+            outline: none !important;
+        }
+
+        /* 时间输入框：去掉背景和边框，只留一行淡色数字 */
+        .map-row input[type="time"] {
+            position: relative;
+            cursor: pointer;
+            background: transparent;
+            border-color: transparent;
+            padding: 7px 2px;
+            color: #475569;
+            text-align: center;
+            font-weight: 500;
+            outline: none !important;
+            -webkit-tap-highlight-color: transparent;
+            -webkit-focus-ring-color: transparent;
+        }
+        .map-row input[type="time"]:hover {
+            background: #f5f7fb;
+        }
+        .map-row input[type="time"]:focus,
+        .map-row input[type="time"]:focus-visible,
+        .map-row input[type="time"]:active {
+            background: #fff;
+            border-color: var(--primary);
+            outline: none !important;
+            box-shadow: 0 0 0 3px rgba(79, 110, 247, 0.12);
+            -webkit-tap-highlight-color: transparent;
+        }
+        .map-row input[type="time"]::-webkit-calendar-picker-indicator {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            opacity: 0;
+            cursor: pointer;
+            background: transparent;
+        }
+        .map-row input[type="time"]::-webkit-inner-spin-button {
+            display: none;
+        }
+        .map-row input[type="time"]::-webkit-clear-button {
+            display: none;
+        }
+
+        /* 班次输入框：透明底，蓝字加粗（只读流水号） */
+        .map-row .map-code {
+            font-weight: 700;
+            color: var(--primary);
+            background: transparent;
+            border-color: transparent;
+            padding: 7px 4px;
+            cursor: default;
+        }
+        .map-row .map-code:hover {
+            background: transparent;
+        }
+        .map-row .map-code:focus,
+        .map-row .map-code:focus-visible {
+            background: transparent;
+            border-color: transparent;
+            color: var(--primary);
+            outline: none !important;
+            box-shadow: none;
+        }
+
+        .map-row .map-arrow,
+        .map-row .map-tilde {
+            color: #cbd5e1;
+            font-size: 13px;
+            font-weight: 600;
+            text-align: center;
+            user-select: none;
+            line-height: 1;
+        }
+
+        /* 删除按钮：轻量灰，悬停红 */
+        .map-row .map-del {
+            width: 100%;
+            height: 38px;
+            border-radius: 8px;
+            border: none;
+            background: transparent;
+            color: #cbd5e1;
+            font-size: 13px;
+            font-weight: 700;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background var(--transition), color var(--transition), transform var(--transition);
+            padding: 0;
+            -webkit-tap-highlight-color: transparent;
+            outline: none;
+        }
+        .map-row .map-del:hover {
+            background: var(--rest-bg);
+            color: var(--rest);
+        }
+        .map-row .map-del:active {
+            transform: scale(0.94);
+        }
+        .map-row .map-del:focus,
+        .map-row .map-del:focus-visible {
+            outline: none !important;
+            box-shadow: none;
+        }
+
+        .map-empty {
+            color: var(--muted);
+            font-size: 13px;
+            padding: 14px 12px;
+            text-align: center;
+            border: 1px dashed var(--border);
+            border-radius: var(--radius-sm);
+            background: #fafbff;
+        }
+        .map-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 12px;
+            flex-wrap: wrap;
+        }
+        .map-add-btn {
+            padding: 10px 18px;
+            border-radius: var(--radius-sm);
+            border: 2px dashed #c7d2fe;
+            background: transparent;
+            color: var(--primary);
+            font-weight: 600;
+            font-size: 13.5px;
+            cursor: pointer;
+            transition: border-color var(--transition), background var(--transition);
+            min-height: 42px;
+            -webkit-tap-highlight-color: transparent;
+            outline: none;
+        }
+        .map-add-btn:hover {
+            border-color: var(--primary);
+            background: var(--primary-light);
+        }
+        .map-add-btn:focus,
+        .map-add-btn:focus-visible {
+            outline: none !important;
+        }
+        .map-reset-btn {
+            padding: 10px 18px;
+            border-radius: var(--radius-sm);
+            border: 1px solid var(--border);
+            background: transparent;
+            color: var(--muted);
+            font-weight: 600;
+            font-size: 13.5px;
+            cursor: pointer;
+            transition: border-color var(--transition), background var(--transition), color var(--transition);
+            min-height: 42px;
+            -webkit-tap-highlight-color: transparent;
+            outline: none;
+        }
+        .map-reset-btn:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+            background: var(--primary-light);
+        }
+        .map-reset-btn:focus,
+        .map-reset-btn:focus-visible {
+            outline: none !important;
+        }
+
         .fileinfo {
             display: none;
             margin-top: 14px;
@@ -200,6 +475,7 @@
             color: var(--ink);
             font-weight: 500;
             height: 52px;
+            -webkit-tap-highlight-color: transparent;
         }
         .qbar input::placeholder {
             color: var(--muted);
@@ -208,6 +484,7 @@
         .qbar input:focus {
             border-color: var(--primary);
             box-shadow: 0 0 0 4px rgba(79, 110, 247, 0.12), var(--shadow);
+            outline: none !important;
         }
         .qbar button {
             width: 100%;
@@ -227,6 +504,8 @@
             justify-content: center;
             gap: 6px;
             letter-spacing: 0.3px;
+            -webkit-tap-highlight-color: transparent;
+            outline: none;
         }
         .qbar button:active {
             transform: scale(0.97);
@@ -289,21 +568,42 @@
         .export-wrap{
             margin:12px 0;
         }
+        /* 导出按钮：与「查询」按钮同款渐变、阴影、交互 */
         .export-btn{
-            padding:10px 20px;
+            padding:0 28px;
+            height:52px;
             border-radius: var(--radius-sm);
             border:none;
-            background:#10b981;
+            background: var(--primary-gradient);
             color:#fff;
+            font-size:16px;
             font-weight:600;
+            letter-spacing:0.3px;
             cursor:pointer;
             display:inline-flex;
             align-items:center;
+            justify-content:center;
             gap:6px;
+            box-shadow: 0 4px 16px rgba(79, 110, 247, 0.30);
+            transition: transform var(--transition), box-shadow var(--transition);
+            -webkit-tap-highlight-color: transparent;
+            outline: none;
+        }
+        .export-btn:hover{
+            box-shadow: 0 6px 24px rgba(79, 110, 247, 0.40);
+        }
+        .export-btn:active{
+            transform: scale(0.97);
+        }
+        .export-btn:focus,
+        .export-btn:focus-visible{
+            outline: none !important;
         }
         .export-btn:disabled{
             opacity:0.6;
             cursor:not-allowed;
+            transform:none;
+            box-shadow: 0 4px 16px rgba(79, 110, 247, 0.30);
         }
         .pcard {
             background: var(--card);
@@ -368,7 +668,7 @@
         }
         .shift-item {
             display: grid;
-            grid-template-columns: 1fr 1fr 1fr;
+            grid-template-columns: 1.05fr 0.6fr 0.78fr 1.57fr;
             align-items: center;
             padding: 10px 14px;
             border-bottom: 1px solid var(--border);
@@ -393,19 +693,28 @@
         }
         .shift-header .s-date,
         .shift-header .s-week,
-        .shift-header .s-shift {
+        .shift-header .s-shift,
+        .shift-header .s-time {
             color: var(--ink);
             font-weight: 700;
         }
         .shift-item .s-date,
         .shift-item .s-week,
-        .shift-item .s-shift {
+        .shift-item .s-shift,
+        .shift-item .s-time {
             font-weight: 600;
             color: var(--ink);
             font-size: 12.5px;
             text-align: center;
             justify-self: center;
             width: 100%;
+        }
+        .shift-item .s-time {
+            font-weight: 500;
+            color: var(--muted);
+            font-size: 12px;
+            word-break: break-all;
+            line-height: 1.35;
         }
         .shift-item .s-week {
             color: var(--ink);
@@ -478,6 +787,12 @@
         .shift-table-wrap td.shift-cell {
             font-weight: 600;
             color: var(--ink);
+            font-size: 12.5px;
+            text-align: center;
+        }
+        .shift-table-wrap td.time-cell {
+            font-weight: 500;
+            color: #475569;
             font-size: 12.5px;
             text-align: center;
         }
@@ -599,6 +914,23 @@
             .shift-item .s-shift {
                 font-size: 13px;
             }
+            .shift-item .s-time {
+                font-size: 12.5px;
+            }
+            .mapcard {
+                padding: 20px 22px 16px;
+            }
+            .map-grid {
+                grid-template-columns: 78px 18px minmax(0, 1fr) 12px minmax(0, 1fr) 42px;
+                gap: 8px;
+            }
+            .map-row input {
+                height: 40px;
+                font-size: 13.5px;
+            }
+            .map-row .map-del {
+                height: 40px;
+            }
         }
         @media (min-width: 820px) {
             .shift-list {
@@ -632,6 +964,9 @@
             .shift-item .s-shift {
                 font-size: 11.5px;
             }
+            .shift-item .s-time {
+                font-size: 10.5px;
+            }
             .shift-item .s-shift .chip {
                 font-size: 11px;
                 padding: 1px 10px;
@@ -648,6 +983,51 @@
                 font-size: 11.5px;
             }
         }
+        @media (max-width: 520px) {
+            .mapcard {
+                padding: 16px 12px 12px;
+            }
+            .map-grid {
+                grid-template-columns: 40px 12px minmax(0, 1fr) 8px minmax(0, 1fr) 30px;
+                gap: 4px;
+            }
+            .map-head {
+                font-size: 10.5px;
+                padding-bottom: 6px;
+                margin-bottom: 2px;
+            }
+            .map-row {
+                padding: 3px 1px;
+            }
+            .map-row input {
+                height: 36px;
+                font-size: 12px;
+                padding: 6px 2px;
+                border-radius: 8px;
+            }
+            .map-row input[type="time"] {
+                padding: 6px 1px;
+                font-size: 11.5px;
+            }
+            .map-row .map-code {
+                padding: 6px 2px;
+                font-size: 12px;
+            }
+            .map-row .map-arrow,
+            .map-row .map-tilde {
+                font-size: 11px;
+            }
+            .map-row .map-del {
+                height: 36px;
+                font-size: 12px;
+            }
+            .mapcard-title {
+                font-size: 14px;
+            }
+            .mapcard-desc {
+                font-size: 11.5px;
+            }
+        }
         @media (max-width: 400px) {
             .shift-item {
                 padding: 6px 10px;
@@ -657,6 +1037,9 @@
             .shift-item .s-week,
             .shift-item .s-shift {
                 font-size: 10.5px;
+            }
+            .shift-item .s-time {
+                font-size: 9.5px;
             }
             .shift-item .s-shift .chip {
                 font-size: 10px;
@@ -682,6 +1065,11 @@
                 height: 46px;
                 padding: 0 18px;
             }
+            .export-btn {
+                font-size: 14px;
+                height: 46px;
+                padding: 0 18px;
+            }
             .drop {
                 padding: 24px 12px 20px;
             }
@@ -690,6 +1078,16 @@
             }
             .drop .big {
                 font-size: 14px;
+            }
+            .map-grid {
+                grid-template-columns: 34px 10px minmax(0, 1fr) 8px minmax(0, 1fr) 28px;
+                gap: 3px;
+            }
+            .map-row input[type="time"] {
+                font-size: 10.5px;
+            }
+            .map-row .map-code {
+                font-size: 11px;
             }
         }
         #captureContainer{
@@ -713,6 +1111,32 @@
         <div class="small">支持 <b>.xlsx</b> · <b>.xls</b> · <b>.csv</b></div>
         <input type="file" id="file" accept=".xlsx,.xls,.csv" />
     </div>
+
+    <!-- ===== 班次时间映射配置模块 ===== -->
+    <div class="mapcard" id="mapcard">
+        <div class="mapcard-head">
+            <div>
+                <div class="mapcard-title"><span class="icon">⏰</span> 班次时间映射</div>
+                <div class="mapcard-desc">已按时间表预置 10 条班次，班次号自动生成、无需手填；点时间框选择上下班时间，改完自动保存。若显示的仍是旧数据，点右侧「恢复默认班次」。</div>
+            </div>
+        </div>
+
+        <div class="map-head map-grid">
+            <span>班次</span>
+            <span></span>
+            <span>起始时间</span>
+            <span></span>
+            <span>结束时间</span>
+            <span></span>
+        </div>
+
+        <div class="map-rows" id="mapRows"></div>
+        <div class="map-actions">
+            <button class="map-add-btn" id="mapAddBtn" type="button">＋ 添加班次</button>
+            <button class="map-reset-btn" id="mapResetBtn" type="button">↺ 恢复默认班次</button>
+        </div>
+    </div>
+
     <div class="fileinfo" id="fileinfo"></div>
     <div class="query" id="query">
         <div class="qbar">
@@ -739,7 +1163,25 @@
 <script>
     (function() {
         "use strict";
+
         const CACHE_KEY = 'schedule_cache';
+        // 版本号升级 → 旧缓存自动失效
+        const MAP_KEY = 'schedule_shift_time_map_v5';
+
+        // 默认班次时间表（班次号 1~10 自动生成）
+        const DEFAULT_MAP = [
+            { code: '1',  start: '08:00', end: '05:00' },
+            { code: '2',  start: '08:00', end: '17:30' },
+            { code: '3',  start: '08:15', end: '18:00' },
+            { code: '4',  start: '10:00', end: '21:30' },
+            { code: '5',  start: '09:00', end: '18:15' },
+            { code: '6',  start: '09:30', end: '19:00' },
+            { code: '7',  start: '09:45', end: '21:15' },
+            { code: '8',  start: '10:15', end: '21:00' },
+            { code: '9',  start: '10:00', end: '22:00' },
+            { code: '10', start: '09:45', end: '22:00' }
+        ];
+
         var $ = function(id) { return document.getElementById(id); };
         var drop = $('drop');
         var fileInput = $('file');
@@ -753,6 +1195,9 @@
         var exportWrap = $('exportWrap');
         var exportImgBtn = $('exportImgBtn');
         var captureContainer = $('captureContainer');
+        var mapRows = $('mapRows');
+        var mapAddBtn = $('mapAddBtn');
+        var mapResetBtn = $('mapResetBtn');
 
         var state = {
             people: [],
@@ -760,7 +1205,8 @@
             weekdays: [],
             loaded: false,
             lastKeyword: '',
-            currentMatchPerson: null
+            currentMatchPerson: null,
+            shiftMapList: []
         };
 
         function excelSerialToDate(serial) {
@@ -781,6 +1227,17 @@
         function wdCN(d) {
             return ['日', '一', '二', '三', '四', '五', '六'][d.getDay()];
         }
+        function normalizeTime(v) {
+            if (v === null || v === undefined) return '';
+            var s = String(v).trim();
+            if (!s) return '';
+            var m = s.match(/^(\d{1,2}):(\d{2})(?::\d{2})?$/);
+            if (!m) return '';
+            var hh = parseInt(m[1], 10);
+            var mm = parseInt(m[2], 10);
+            if (hh < 0 || hh > 23 || mm < 0 || mm > 59) return '';
+            return (hh < 10 ? '0' + hh : '' + hh) + ':' + (mm < 10 ? '0' + mm : '' + mm);
+        }
 
         function saveCache() {
             if (!state.loaded) return;
@@ -791,9 +1248,7 @@
                 lastKeyword: state.lastKeyword || '',
                 loaded: true
             };
-            try {
-                localStorage.setItem(CACHE_KEY, JSON.stringify(cache));
-            } catch (e) { }
+            try { localStorage.setItem(CACHE_KEY, JSON.stringify(cache)); } catch (e) { }
         }
         function loadCache() {
             var raw = localStorage.getItem(CACHE_KEY);
@@ -803,13 +1258,136 @@
                 if (!cache.people || !cache.dates || !cache.weekdays) return null;
                 cache.dates = cache.dates.map(function(t) { return t ? new Date(t) : null; });
                 return cache;
-            } catch (e) {
-                return null;
+            } catch (e) { return null; }
+        }
+        function clearCache() { localStorage.removeItem(CACHE_KEY); }
+
+        // 保存前统一重排班次号：1、2、3……（连续流水号）
+        function saveMapCache() {
+            state.shiftMapList.forEach(function(item, idx) {
+                item.code = String(idx + 1);
+            });
+            try { localStorage.setItem(MAP_KEY, JSON.stringify(state.shiftMapList)); } catch (e) { }
+        }
+        function loadMapCache() {
+            var raw = localStorage.getItem(MAP_KEY);
+            if (raw === null) return null;
+            try {
+                var arr = JSON.parse(raw);
+                if (!Array.isArray(arr)) return null;
+                return arr
+                    .filter(function(x) { return x && typeof x === 'object'; })
+                    .map(function(x) {
+                        return {
+                            code: x.code == null ? '' : String(x.code),
+                            start: normalizeTime(x.start),
+                            end: normalizeTime(x.end)
+                        };
+                    });
+            } catch (e) { return null; }
+        }
+
+        function makeTimeInput(value, onInput) {
+            var input = document.createElement('input');
+            input.type = 'time';
+            input.step = '60';
+            input.value = value || '';
+            input.addEventListener('input', onInput);
+            input.addEventListener('change', onInput);
+            return input;
+        }
+        function makeText(cls, text) {
+            var span = document.createElement('span');
+            span.className = cls;
+            span.textContent = text;
+            span.setAttribute('aria-hidden', 'true');
+            return span;
+        }
+
+        function renderMapRows() {
+            mapRows.innerHTML = '';
+
+            if (!state.shiftMapList.length) {
+                saveMapCache();
+                var empty = document.createElement('div');
+                empty.className = 'map-empty';
+                empty.textContent = '还没有配置，点下面「＋ 添加班次」开始';
+                mapRows.appendChild(empty);
+                return;
             }
+
+            // 渲染前统一重排班次号：1、2、3……
+            state.shiftMapList.forEach(function(item, idx) {
+                item.code = String(idx + 1);
+            });
+            saveMapCache();
+
+            state.shiftMapList.forEach(function(item, idx) {
+                var row = document.createElement('div');
+                row.className = 'map-row map-grid';
+
+                // 班次列：只读流水号，自动生成，不需要手填
+                var codeInput = document.createElement('input');
+                codeInput.type = 'text';
+                codeInput.className = 'map-code';
+                codeInput.value = String(idx + 1);
+                codeInput.readOnly = true;
+                codeInput.tabIndex = -1;
+                codeInput.setAttribute('aria-label', '班次号');
+
+                var startInput = makeTimeInput(item.start, function() {
+                    state.shiftMapList[idx].start = this.value;
+                    saveMapCache();
+                    refreshResultIfAny();
+                });
+
+                var endInput = makeTimeInput(item.end, function() {
+                    state.shiftMapList[idx].end = this.value;
+                    saveMapCache();
+                    refreshResultIfAny();
+                });
+
+                var delBtn = document.createElement('button');
+                delBtn.type = 'button';
+                delBtn.className = 'map-del';
+                delBtn.title = '删除此条';
+                delBtn.textContent = '✕';
+                delBtn.addEventListener('click', function() {
+                    state.shiftMapList.splice(idx, 1);
+                    renderMapRows();
+                    refreshResultIfAny();
+                });
+
+                row.appendChild(codeInput);
+                row.appendChild(makeText('map-arrow', '→'));
+                row.appendChild(startInput);
+                row.appendChild(makeText('map-tilde', '~'));
+                row.appendChild(endInput);
+                row.appendChild(delBtn);
+
+                mapRows.appendChild(row);
+            });
         }
-        function clearCache() {
-            localStorage.removeItem(CACHE_KEY);
-        }
+
+        mapAddBtn.addEventListener('click', function() {
+            state.shiftMapList.push({ code: '', start: '', end: '' });
+            renderMapRows();
+
+            // 新增后自动聚焦到最后一个“起始时间”
+            var timeInputs = mapRows.querySelectorAll('input[type="time"]');
+            if (timeInputs.length) timeInputs[timeInputs.length - 1].focus();
+        });
+
+        // 恢复默认班次：直接用 DEFAULT_MAP 覆盖并重新渲染
+        mapResetBtn.addEventListener('click', function() {
+            if (!confirm('确定要恢复为默认的 10 条班次吗？当前自定义的时间会被覆盖。')) return;
+            state.shiftMapList = DEFAULT_MAP.map(function(x) {
+                return { code: x.code, start: x.start, end: x.end };
+            });
+            saveMapCache();
+            renderMapRows();
+            refreshResultIfAny();
+        });
 
         function parseWorkbook(wb) {
             var sheet = wb.Sheets[wb.SheetNames[0]];
@@ -892,6 +1470,24 @@
             return { cls: 'chip-work', label: s };
         }
 
+        function getShiftTime(code) {
+            if (code === null || code === undefined) return '';
+            if (code === 0 || code === '0') return '';
+            var key = String(code).trim();
+            if (key === '' || /^x/i.test(key)) return '';
+            for (var i = 0; i < state.shiftMapList.length; i++) {
+                var item = state.shiftMapList[i];
+                if (String(item.code).trim() === key) {
+                    var s = normalizeTime(item.start);
+                    var e = normalizeTime(item.end);
+                    if (!s && !e) return '';
+                    if (s && e) return s + '~' + e;
+                    return s || e;
+                }
+            }
+            return '';
+        }
+
         function buildCaptureHtml(person){
             var workCount = Object.keys(person.shifts).filter(function(k) {
                 return person.shifts[k] !== 0 && person.shifts[k] !== '0';
@@ -926,11 +1522,14 @@
                     }
                 }
 
+                const timeTxt = getShiftTime(code);
+
                 tableRows += `
                     <tr>
-                        <td style="width:34%;text-align:center;padding:16px 10px;font-size:15px;color:#0f172a;border-bottom:1px solid #e2e8f0;">${dateTxt}</td>
-                        <td style="width:33%;text-align:center;padding:16px 10px;font-size:15px;color:#0f172a;border-bottom:1px solid #e2e8f0;font-weight:600;">星期${wdTxt}</td>
-                        <td style="width:33%;text-align:center;padding:16px 10px;border-bottom:1px solid #e2e8f0;">${shiftHtml}</td>
+                        <td style="width:24%;text-align:center;padding:16px 10px;font-size:15px;color:#0f172a;border-bottom:1px solid #e2e8f0;">${dateTxt}</td>
+                        <td style="width:14%;text-align:center;padding:16px 10px;font-size:15px;color:#0f172a;border-bottom:1px solid #e2e8f0;font-weight:600;">星期${wdTxt}</td>
+                        <td style="width:18%;text-align:center;padding:16px 10px;border-bottom:1px solid #e2e8f0;">${shiftHtml}</td>
+                        <td style="width:44%;text-align:center;padding:16px 10px;border-bottom:1px solid #e2e8f0;font-size:14px;color:#475569;font-weight:500;">${timeTxt}</td>
                     </tr>
                     `;
             }
@@ -947,9 +1546,10 @@
                     <table style="width:100%;border-collapse:collapse;table-layout:fixed;">
                         <thead>
                             <tr style="background:#f1f5f9;">
-                                <th style="width:34%;text-align:center;padding:16px 10px;font-size:15px;color:#0f172a;font-weight:700;border-bottom:2px solid #e2e8f0;">日期</th>
-                                <th style="width:33%;text-align:center;padding:16px 10px;font-size:15px;color:#0f172a;font-weight:700;border-bottom:2px solid #e2e8f0;">星期</th>
-                                <th style="width:33%;text-align:center;padding:16px 10px;font-size:15px;color:#0f172a;font-weight:700;border-bottom:2px solid #e2e8f0;">班次</th>
+                                <th style="width:24%;text-align:center;padding:16px 10px;font-size:15px;color:#0f172a;font-weight:700;border-bottom:2px solid #e2e8f0;">日期</th>
+                                <th style="width:14%;text-align:center;padding:16px 10px;font-size:15px;color:#0f172a;font-weight:700;border-bottom:2px solid #e2e8f0;">星期</th>
+                                <th style="width:18%;text-align:center;padding:16px 10px;font-size:15px;color:#0f172a;font-weight:700;border-bottom:2px solid #e2e8f0;">班次</th>
+                                <th style="width:44%;text-align:center;padding:16px 10px;font-size:15px;color:#0f172a;font-weight:700;border-bottom:2px solid #e2e8f0;">时间</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -959,7 +1559,6 @@
                     <div style="margin-top:18px;font-size:13px;color:#64748b;display:flex;gap:18px;flex-wrap:wrap;">
                         <span><span style="display:inline-block;width:10px;height:10px;border-radius:3px;background:#2563eb;margin-right:6px;vertical-align:middle;"></span>有班</span>
                         <span><span style="display:inline-block;width:10px;height:10px;border-radius:3px;background:#dc2626;margin-right:6px;vertical-align:middle;"></span>休</span>
-<!--                        <span><span style="display:inline-block;width:10px;height:10px;border-radius:3px;background:#7c3aed;margin-right:6px;vertical-align:middle;"></span>特殊班次</span>-->
                     </div>
                 </div>
                 `;
@@ -1002,6 +1601,7 @@
                 '</span>' +
                 '</div>';
             frag.appendChild(card);
+
             var listDiv = document.createElement('div');
             listDiv.className = 'shift-list';
             var headerItem = document.createElement('div');
@@ -1009,7 +1609,8 @@
             headerItem.innerHTML =
                 '<span class="s-date">日期</span>' +
                 '<span class="s-week">星期</span>' +
-                '<span class="s-shift">班次</span>';
+                '<span class="s-shift">班次</span>' +
+                '<span class="s-time">时间</span>';
             listDiv.appendChild(headerItem);
             for (var i = 0; i < p.cols.length; i++) {
                 var key = p.cols[i];
@@ -1026,19 +1627,22 @@
                     var rc = renderCellClass(code);
                     shiftHtml = '<span class="chip ' + rc.cls + '">' + rc.label + '</span>';
                 }
+                var timeTxt = getShiftTime(code);
                 item.innerHTML =
                     '<span class="s-date">' + dateTxt + '</span>' +
                     '<span class="s-week">' + wdTxt + '</span>' +
-                    '<span class="s-shift">' + shiftHtml + '</span>';
+                    '<span class="s-shift">' + shiftHtml + '</span>' +
+                    '<span class="s-time">' + timeTxt + '</span>';
                 listDiv.appendChild(item);
             }
             frag.appendChild(listDiv);
+
             var tableWrap = document.createElement('div');
             tableWrap.className = 'shift-table-wrap';
             var table = document.createElement('table');
             var thead = document.createElement('thead');
             var trh = document.createElement('tr');
-            trh.innerHTML = '<th>日期</th><th>星期</th><th>班次</th>';
+            trh.innerHTML = '<th>日期</th><th>星期</th><th>班次</th><th>时间</th>';
             thead.appendChild(trh);
             table.appendChild(thead);
             var tbody = document.createElement('tbody');
@@ -1056,16 +1660,27 @@
                     var rc2 = renderCellClass(code2);
                     shiftHtml2 = '<span class="chip ' + rc2.cls + '">' + rc2.label + '</span>';
                 }
+                var timeTxt2 = getShiftTime(code2);
                 tr.innerHTML =
                     '<td class="date-cell">' + dateTxt2 + '</td>' +
                     '<td class="week-cell">' + wdTxt2 + '</td>' +
-                    '<td class="shift-cell">' + shiftHtml2 + '</td>';
+                    '<td class="shift-cell">' + shiftHtml2 + '</td>' +
+                    '<td class="time-cell">' + timeTxt2 + '</td>';
                 tbody.appendChild(tr);
             }
             table.appendChild(tbody);
             tableWrap.appendChild(table);
             frag.appendChild(tableWrap);
             resultBox.appendChild(frag);
+        }
+
+        function refreshResultIfAny() {
+            if (!state.loaded || !state.lastKeyword) return;
+            var kw = state.lastKeyword;
+            var matches = state.people.filter(function(p) {
+                return p.name.toLowerCase().indexOf(kw) >= 0;
+            });
+            renderResult(matches);
         }
 
         function doQuery() {
@@ -1198,11 +1813,27 @@
         }
 
         function init() {
+            // 读取班次缓存（新版本 key=v5，旧缓存自动失效）
+            var cachedMap = loadMapCache();
+
+            // 条数不一致（比如只有 1、2 两条）时强制用默认
+            if (!cachedMap || cachedMap.length < DEFAULT_MAP.length) {
+                state.shiftMapList = DEFAULT_MAP.map(function(x) {
+                    return { code: x.code, start: x.start, end: x.end };
+                });
+                saveMapCache();
+            } else {
+                state.shiftMapList = cachedMap;
+            }
+
+            renderMapRows();
+
             var restored = restoreFromCache();
             if (!restored) {
                 resultBox.style.display = 'block';
                 resultBox.innerHTML = '<div class="empty"><span class="empty-icon">📂</span>请上传 Excel 排班表开始查询</div>';
             }
+
             drop.addEventListener('click', function() { fileInput.click(); });
             fileInput.addEventListener('change', function() { loadFile(fileInput.files[0]); });
             ['dragover', 'dragenter'].forEach(function(ev) {
